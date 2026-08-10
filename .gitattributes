@@ -1,0 +1,7 @@
+# Store text with LF in the repository, check out with native endings.
+* text=auto
+
+# Python's csv writer emits CRLF, so the reference export keeps CRLF everywhere.
+*.csv text eol=crlf
+
+*.png binary

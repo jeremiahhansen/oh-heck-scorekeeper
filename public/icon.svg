@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Oh Heck Scorekeeper">
+  <rect width="512" height="512" fill="#0f3d2e" />
+  <g transform="rotate(-15 256 270)">
+    <rect x="132" y="146" width="152" height="220" rx="18" fill="#e8e3d5" stroke="#0b2c21" stroke-width="7" />
+  </g>
+  <g transform="rotate(11 256 270)">
+    <rect x="214" y="146" width="152" height="220" rx="18" fill="#fdfdfb" stroke="#0b2c21" stroke-width="7" />
+    <text x="236" y="196" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#c62828">OH</text>
+    <path
+      d="M290 330 C290 330 236 292 236 253 C236 229 254 216 271 216 C281 216 288 222 290 229 C292 222 299 216 309 216 C326 216 344 229 344 253 C344 292 290 330 290 330 Z"
+      fill="#c62828" />
+  </g>
+</svg>

@@ -1,0 +1,592 @@
+:root {
+  --bg: #0b1f19;
+  --surface: #123026;
+  --surface-raised: #17392d;
+  --border: #24513f;
+  --text: #f2f5f3;
+  --muted: #9db3a9;
+  --accent: #f0b429;
+  --accent-text: #2b1d00;
+  --danger: #e5484d;
+  --ok: #3dd68c;
+  --radius: 14px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  /* Keep the page from rubber-banding under the sticky footer on iOS. */
+  overscroll-behavior-y: none;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) 14px 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Let a form participate in the column layout so .footer can sink to the bottom. */
+.app > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* ---------- Typography ---------- */
+
+h1 {
+  font-size: 1.35rem;
+  margin: 4px 0 2px;
+  letter-spacing: 0.01em;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 10px;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 18px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 6px 0 10px;
+}
+
+/* ---------- Layout primitives ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field > .label {
+  display: block;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  /* Equal-height labels, so the inputs inside them can bottom-align exactly. */
+  align-items: stretch;
+}
+
+.row > .field {
+  /* A field's bottom margin is vertical rhythm between stacked fields, and would
+     otherwise throw two side-by-side fields out of alignment. */
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Making these inputs flex items blockifies them, which removes the descender
+   space an inline input leaves below itself inside its label. That gap differs
+   between a native iOS date control and a plain text field, which is what threw
+   the two out of line on iPhone. The explicit height then pins both to the same
+   box whatever intrinsic size the platform wants. */
+.row > .field > input {
+  margin-top: auto;
+  height: 46px;
+  /* Overrides the shared min-height so nothing can inflate the box past 46px. */
+  min-height: 0;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---------- Inputs ---------- */
+
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+  width: 100%;
+  /* 16px minimum stops iOS Safari zooming in on focus. */
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 12px;
+  min-height: 46px;
+}
+
+/* Only as wide as the date and its calendar icon need. */
+.field-date input {
+  width: auto;
+}
+
+/* iOS sizes a date control from its internal shadow content and ignores the
+   height we ask for, which left the date box taller than the text field beside
+   it. Switching off the native appearance and neutralising that inner value
+   element hands height control back to us; tapping still opens the iOS date
+   wheel. Scoped to iOS so desktop keeps its native calendar button. */
+@supports (-webkit-touch-callout: none) {
+  .field-date input {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .field-date input::-webkit-date-and-time-value {
+    margin: 0;
+    padding: 0;
+    height: auto;
+    line-height: 1.2;
+    text-align: left;
+  }
+}
+
+.field-game-number {
+  width: 92px;
+  flex: none;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Buttons ---------- */
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  cursor: pointer;
+  /* Suppress the iOS double-tap-to-zoom delay on taps. */
+  touch-action: manipulation;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 650;
+  width: 100%;
+  min-height: 54px;
+  font-size: 1.05rem;
+}
+
+button.ghost {
+  background: transparent;
+}
+
+button.danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: transparent;
+}
+
+button.link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  min-height: 0;
+  padding: 4px 0;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+}
+
+.button-row > button {
+  flex: 1;
+}
+
+/* ---------- Setup: player list ---------- */
+
+.player-input-row {
+  display: grid;
+  grid-template-columns: 26px 1fr 44px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.seat-number {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.icon-button {
+  min-height: 44px;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.dealer-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  min-height: 42px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+/* ---------- Round entry ---------- */
+
+.round-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.round-title {
+  font-size: 1.3rem;
+  font-weight: 650;
+}
+
+.cards-badge {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.dealer-line {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.dealer-line strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.entry-table {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 44px;
+  gap: 6px;
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.entry-row:last-child {
+  border-bottom: none;
+}
+
+.entry-row.head {
+  background: var(--surface-raised);
+  padding: 7px 10px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.entry-row.head .col-label {
+  width: 104px;
+  text-align: center;
+}
+
+.entry-row.head .col-label.narrow {
+  width: 44px;
+}
+
+.entry-row.is-dealer {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.entry-row.totals {
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+/* Matches the stepper width so the totals sit under their own columns. */
+.total-cell {
+  width: 104px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.total-cell.ok {
+  color: var(--ok);
+}
+
+.total-cell.bad {
+  color: var(--danger);
+}
+
+.player-name {
+  font-size: 0.98rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dealer-tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border-radius: 4px;
+  padding: 0 4px;
+  vertical-align: 1px;
+}
+
+/* ---------- Stepper ---------- */
+
+.stepper {
+  display: grid;
+  grid-template-columns: 34px 36px 34px;
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.stepper button {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  min-height: 42px;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+}
+
+.stepper .value {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.burn-toggle {
+  min-height: 42px;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.burn-toggle[aria-pressed="true"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent, var(--bg) 22%);
+  padding: 14px 0 max(12px, env(safe-area-inset-bottom));
+  margin-top: auto;
+}
+
+.notice {
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 0.88rem;
+  margin-bottom: 8px;
+}
+
+.notice.error {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+/* ---------- Standings ---------- */
+
+.standings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.standings li {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.standings .total {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.standings .total.negative {
+  color: var(--danger);
+}
+
+/* ---------- Export ---------- */
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.summary-table th,
+.summary-table td {
+  text-align: left;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.summary-table td.num,
+.summary-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-table tr:last-child td {
+  border-bottom: none;
+}
+
+.csv-preview {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.72rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  -webkit-overflow-scrolling: touch;
+}
+
+.status-line {
+  font-size: 0.88rem;
+  color: var(--ok);
+  margin: 10px 0 0;
+  min-height: 1.2em;
+}
+
+.status-line.error {
+  color: var(--danger);
+}
