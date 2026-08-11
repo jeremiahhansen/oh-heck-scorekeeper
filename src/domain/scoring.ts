@@ -64,3 +64,65 @@ export function standings(game: Game): Standing[] {
     return { ...row, rank };
   });
 }
+
+/** One player's result in one scorecard cell (null when that round is not recorded). */
+export interface ScorecardCell {
+  bid: number;
+  taken: number;
+  /** Points earned this round. */
+  score: number;
+  /** Cumulative total through this round. */
+  runningTotal: number;
+  burned: boolean;
+}
+
+export interface ScorecardRound {
+  handNumber: number;
+  cardsDealt: number;
+  /** Seat-order cells; null for rounds not yet played. */
+  cells: Array<ScorecardCell | null>;
+}
+
+export interface ScorecardMatrix {
+  players: Player[];
+  rounds: ScorecardRound[];
+}
+
+/** Players as columns, every sequence round as a row, with running totals. */
+export function scorecardMatrix(game: Game): ScorecardMatrix {
+  const players = playersInSeatOrder(game);
+  const totals: Record<string, number> = {};
+  for (const player of players) totals[player.id] = 0;
+
+  const recordedByHand = new Map(game.rounds.map((round) => [round.handNumber, round]));
+
+  const rounds: ScorecardRound[] = game.cardsSequence.map((cardsDealt, index) => {
+    const handNumber = index + 1;
+    const round = recordedByHand.get(handNumber);
+    if (!round) {
+      return {
+        handNumber,
+        cardsDealt,
+        cells: players.map(() => null),
+      };
+    }
+
+    const cells = players.map((player) => {
+      const entry = round.entries[player.id];
+      if (!entry) return null;
+      const score = handScore(entry.bid, entry.taken);
+      totals[player.id] = (totals[player.id] ?? 0) + score;
+      return {
+        bid: entry.bid,
+        taken: entry.taken,
+        score,
+        runningTotal: totals[player.id] ?? 0,
+        burned: entry.bid !== entry.taken,
+      };
+    });
+
+    return { handNumber, cardsDealt, cells };
+  });
+
+  return { players, rounds };
+}

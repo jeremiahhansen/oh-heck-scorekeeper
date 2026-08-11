@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { standings } from "../domain/scoring";
 import type { Game } from "../domain/types";
+import { Scorecard } from "./Scorecard";
 
 interface GameOverviewProps {
   game: Game;
@@ -34,28 +34,11 @@ export function GameOverview({
       </p>
 
       <div className="card">
-        <h2>Standings</h2>
+        <h2>Scorecard</h2>
         {game.rounds.length === 0 ? (
           <p className="hint">No rounds recorded yet.</p>
         ) : (
-          <table className="summary-table">
-            <thead>
-              <tr>
-                <th className="num">#</th>
-                <th>Player</th>
-                <th className="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {standings(game).map(({ player, total, rank }) => (
-                <tr key={player.id}>
-                  <td className="num muted">{rank}</td>
-                  <td>{player.name}</td>
-                  <td className="num">{total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Scorecard game={game} />
         )}
       </div>
 

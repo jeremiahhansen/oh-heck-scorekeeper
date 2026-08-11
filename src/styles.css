@@ -474,14 +474,19 @@ button.link {
 }
 
 .player-name {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 6px;
+  row-gap: 2px;
   align-items: center;
-  gap: 6px;
   min-width: 0;
   font-size: 0.98rem;
 }
 
 .player-name-text {
+  grid-column: 1;
+  grid-row: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -489,8 +494,9 @@ button.link {
 }
 
 .dealer-tag {
-  display: inline-block;
-  flex-shrink: 0;
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -501,6 +507,9 @@ button.link {
 }
 
 .burn-toggle {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
   min-height: 28px;
   min-width: 36px;
   padding: 0 8px;
@@ -508,8 +517,6 @@ button.link {
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--muted);
-  flex-shrink: 0;
-  margin-left: auto;
 }
 
 /* ---------- Stepper ---------- */
@@ -665,6 +672,107 @@ button.link {
 
 .summary-table tr:last-child td {
   border-bottom: none;
+}
+
+/* ---------- Scorecard ---------- */
+
+.scorecard-scroller {
+  overflow: auto;
+  max-height: min(60vh, 520px);
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.scorecard {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.82rem;
+  min-width: 100%;
+}
+
+.scorecard th,
+.scorecard td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.scorecard thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-raised);
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scorecard-corner,
+.scorecard-round {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  text-align: left;
+  white-space: nowrap;
+  font-weight: 600;
+  width: 1%;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.scorecard thead .scorecard-corner {
+  z-index: 3;
+  background: var(--surface-raised);
+}
+
+.scorecard-round-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.scorecard-player {
+  min-width: 56px;
+}
+
+.scorecard-cell {
+  text-align: center;
+  background: var(--surface);
+  min-width: 52px;
+}
+
+.scorecard-cell.is-burn {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+}
+
+.scorecard-cell.is-empty {
+  color: var(--muted);
+}
+
+.scorecard-total {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.scorecard-total.negative {
+  color: var(--danger);
+}
+
+.scorecard-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
 .csv-preview {

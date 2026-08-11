@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { handScore, handStatus, runningTotals, standings } from "../src/domain/scoring";
+import {
+  handScore,
+  handStatus,
+  runningTotals,
+  scorecardMatrix,
+  standings,
+} from "../src/domain/scoring";
 import type { Game } from "../src/domain/types";
 
 describe("handStatus", () => {
@@ -82,5 +88,55 @@ describe("standings", () => {
   it("gives tied players the same rank", () => {
     const tied = standings({ ...game, rounds: [] });
     expect(tied.map((row) => row.rank)).toEqual([1, 1, 1]);
+  });
+});
+
+describe("scorecardMatrix", () => {
+  it("puts players in seat order as columns and tracks running totals", () => {
+    const matrix = scorecardMatrix(game);
+    expect(matrix.players.map((player) => player.name)).toEqual(["Ada", "Bo", "Cy"]);
+    expect(matrix.rounds).toHaveLength(2);
+
+    const round1 = matrix.rounds[0]!;
+    expect(round1.handNumber).toBe(1);
+    expect(round1.cardsDealt).toBe(2);
+    expect(round1.cells).toEqual([
+      { bid: 1, taken: 1, score: 6, runningTotal: 6, burned: false },
+      { bid: 0, taken: 1, score: -1, runningTotal: -1, burned: true },
+      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false },
+    ]);
+
+    const round2 = matrix.rounds[1]!;
+    expect(round2.cells.map((cell) => cell?.runningTotal)).toEqual([11, 5, 4]);
+    expect(round2.cells[2]?.burned).toBe(true);
+  });
+
+  it("leaves unplayed rounds empty and marks a burn when Ada takes all", () => {
+    const inProgress: Game = {
+      ...game,
+      cardsSequence: [7, 6, 5],
+      rounds: [
+        {
+          handNumber: 1,
+          cardsDealt: 7,
+          dealerId: "c",
+          entries: {
+            a: { bid: 0, taken: 7, forcedBurn: false },
+            b: { bid: 0, taken: 0, forcedBurn: false },
+            c: { bid: 0, taken: 0, forcedBurn: false },
+          },
+        },
+      ],
+    };
+
+    const matrix = scorecardMatrix(inProgress);
+    expect(matrix.rounds).toHaveLength(3);
+    expect(matrix.rounds[0]?.cells).toEqual([
+      { bid: 0, taken: 7, score: -7, runningTotal: -7, burned: true },
+      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false },
+      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false },
+    ]);
+    expect(matrix.rounds[1]?.cells).toEqual([null, null, null]);
+    expect(matrix.rounds[2]?.cells).toEqual([null, null, null]);
   });
 });

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { csvFilename, gameToCsv } from "../domain/csv";
-import { standings } from "../domain/scoring";
 import type { Game } from "../domain/types";
 
 interface ExportScreenProps {
@@ -87,28 +86,6 @@ export function ExportScreen({
         {game.gameNumber !== null && ` · Game #${game.gameNumber}`}
         {` · ${game.rounds.length} of ${game.cardsSequence.length} rounds`}
       </p>
-
-      <div className="card">
-        <h2>Final scores</h2>
-        <table className="summary-table">
-          <thead>
-            <tr>
-              <th className="num">#</th>
-              <th>Player</th>
-              <th className="num">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings(game).map(({ player, total, rank }) => (
-              <tr key={player.id}>
-                <td className="num muted">{rank}</td>
-                <td>{player.name}</td>
-                <td className="num">{total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
       <div className="card">
         <h2>CSV</h2>

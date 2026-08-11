@@ -219,7 +219,7 @@ describe("round entry", () => {
 });
 
 describe("export screen", () => {
-  it("is reached after the final round, with final scores and a CSV", () => {
+  it("is reached after the final round, with a CSV ready to share", () => {
     setUpGame();
 
     // Ada takes every trick for the first twelve rounds, having bid none, so she
@@ -234,14 +234,6 @@ describe("export screen", () => {
     recordRound();
 
     expect(screen.getByRole("heading", { name: "Game complete" })).toBeTruthy();
-
-    // Ada burned 48 over the first twelve rounds, then 6 more: -54.
-    // Bo made twelve nothing bids for 60, then burned by one: 59.
-    // Cy made all thirteen: 65.
-    const rows = screen.getAllByRole("row").map((row) => row.textContent);
-    expect(rows).toContain("1Cy65");
-    expect(rows).toContain("2Bo59");
-    expect(rows).toContain("3Ada-54");
 
     // Three players over thirteen rounds.
     expect(screen.getByText(/39 rows, one per player per round/)).toBeTruthy();
