@@ -5,6 +5,7 @@ import type { Game, Player } from "../domain/types";
 
 interface GameSetupProps {
   onStart: (game: Game) => void;
+  onCancel: () => void;
 }
 
 const INITIAL_SEATS = 6;
@@ -17,7 +18,7 @@ function todayIso(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-export function GameSetup({ onStart }: GameSetupProps) {
+export function GameSetup({ onStart, onCancel }: GameSetupProps) {
   const [gameDate, setGameDate] = useState(todayIso);
   const [gameNumber, setGameNumber] = useState("");
   const [names, setNames] = useState<string[]>(() => Array<string>(INITIAL_SEATS).fill(""));
@@ -103,7 +104,7 @@ export function GameSetup({ onStart }: GameSetupProps) {
   return (
     <form onSubmit={handleSubmit}>
       <h1>New game</h1>
-      <p className="subtitle">Oh Heck scorekeeper</p>
+      <p className="subtitle">Oh Heck Scorekeeper</p>
 
       <div className="card">
         <div className="row">
@@ -191,6 +192,14 @@ export function GameSetup({ onStart }: GameSetupProps) {
         {error && <p className="notice error">{error}</p>}
         <button type="submit" className="primary">
           Start game
+        </button>
+        <button
+          type="button"
+          className="ghost"
+          style={{ width: "100%", marginTop: 10 }}
+          onClick={onCancel}
+        >
+          All games
         </button>
       </div>
     </form>

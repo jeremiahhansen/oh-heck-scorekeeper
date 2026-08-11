@@ -1,5 +1,5 @@
 /**
- * Saves the single in-progress game to localStorage.
+ * Saves every game to localStorage as a multi-game archive.
  *
  * Written after every change so a locked or crashed phone never loses a round.
  * This is the one place data crosses back into the program from outside, and
@@ -9,48 +9,71 @@
 
 import type { Entry, Game, Player, Round } from "../domain/types";
 
-const STORAGE_KEY = "oh-heck.game";
+const STORAGE_KEY = "oh-heck.games";
 const SCHEMA_VERSION = 1;
 
-interface Envelope {
+export interface GameStore {
   version: number;
-  game: Game;
+  games: Game[];
+  activeGameId: string | null;
 }
 
-export function saveGame(game: Game): void {
+function emptyStore(): GameStore {
+  return { version: SCHEMA_VERSION, games: [], activeGameId: null };
+}
+
+export function saveStore(store: GameStore): void {
   try {
-    const envelope: Envelope = { version: SCHEMA_VERSION, game };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
     // Storage can be unavailable (private browsing, quota). Losing autosave is
     // better than crashing mid-game; the export screen is the real backstop.
   }
 }
 
-export function clearGame(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Nothing useful to do if storage is unavailable.
-  }
-}
-
-export function loadGame(): Game | null {
+export function loadStore(): GameStore {
   let raw: string | null = null;
   try {
     raw = localStorage.getItem(STORAGE_KEY);
   } catch {
-    return null;
+    return emptyStore();
   }
-  if (!raw) return null;
+  if (!raw) return emptyStore();
 
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed) || parsed.version !== SCHEMA_VERSION) return null;
-    return asGame(parsed.game);
+    return asStore(parsed) ?? emptyStore();
   } catch {
-    return null;
+    return emptyStore();
   }
+}
+
+/** Insert or replace by id, move it to the front, and mark it active. */
+export function upsertGame(game: Game): GameStore {
+  const store = loadStore();
+  const games = [game, ...store.games.filter((existing) => existing.id !== game.id)];
+  const next: GameStore = { version: SCHEMA_VERSION, games, activeGameId: game.id };
+  saveStore(next);
+  return next;
+}
+
+export function deleteGame(id: string): GameStore {
+  const store = loadStore();
+  const games = store.games.filter((game) => game.id !== id);
+  const next: GameStore = {
+    version: SCHEMA_VERSION,
+    games,
+    activeGameId: store.activeGameId === id ? null : store.activeGameId,
+  };
+  saveStore(next);
+  return next;
+}
+
+export function setActiveGameId(id: string | null): GameStore {
+  const store = loadStore();
+  const next: GameStore = { ...store, activeGameId: id };
+  saveStore(next);
+  return next;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -90,7 +113,7 @@ function asRound(value: unknown): Round | null {
   return { handNumber, cardsDealt, dealerId, entries: parsedEntries };
 }
 
-/** Returns null on anything unexpected, which resets the app to a clean setup. */
+/** Returns null on anything unexpected. */
 function asGame(value: unknown): Game | null {
   if (!isRecord(value)) return null;
   const { id, gameNumber, gameDate, players, cardsSequence, startingDealerId, rounds } = value;
@@ -127,4 +150,24 @@ function asGame(value: unknown): Game | null {
     startingDealerId,
     rounds: parsedRounds,
   };
+}
+
+function asStore(value: unknown): GameStore | null {
+  if (!isRecord(value) || value.version !== SCHEMA_VERSION) return null;
+  if (!Array.isArray(value.games)) return null;
+  if (value.activeGameId !== null && typeof value.activeGameId !== "string") return null;
+
+  const games: Game[] = [];
+  for (const rawGame of value.games) {
+    const game = asGame(rawGame);
+    if (!game) return null;
+    games.push(game);
+  }
+
+  const activeGameId = value.activeGameId as string | null;
+  if (activeGameId !== null && !games.some((game) => game.id === activeGameId)) {
+    return { version: SCHEMA_VERSION, games, activeGameId: null };
+  }
+
+  return { version: SCHEMA_VERSION, games, activeGameId };
 }

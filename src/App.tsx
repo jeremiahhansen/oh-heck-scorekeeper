@@ -1,78 +1,163 @@
 import { useEffect, useState } from "react";
-import type { Entry, Game, Round } from "./domain/types";
-import { clearGame, loadGame, saveGame } from "./storage/persistence";
+import type { Game, Round } from "./domain/types";
+import {
+  deleteGame,
+  loadStore,
+  setActiveGameId,
+  upsertGame,
+} from "./storage/persistence";
 import { GameSetup } from "./ui/GameSetup";
+import { GamesOverview } from "./ui/GamesOverview";
+import { GameOverview } from "./ui/GameOverview";
 import { RoundEntry } from "./ui/RoundEntry";
 import { ExportScreen } from "./ui/Export";
 
-type Screen = "setup" | "entry" | "export";
+type Screen = "overview" | "setup" | "entry" | "gameOverview" | "export";
 
 interface AppState {
+  games: Game[];
   game: Game | null;
   screen: Screen;
-  /**
-   * Entries loaded back into the form when a recorded round is reopened for
-   * correction. Null means start the round blank.
-   */
-  resumeEntries: Record<string, Entry> | null;
+}
+
+function isComplete(game: Game): boolean {
+  return game.rounds.length >= game.cardsSequence.length;
 }
 
 function initialState(): AppState {
-  const game = loadGame();
-  if (!game) return { game: null, screen: "setup", resumeEntries: null };
-  const complete = game.rounds.length >= game.cardsSequence.length;
-  return { game, screen: complete ? "export" : "entry", resumeEntries: null };
+  const store = loadStore();
+  const active =
+    store.activeGameId === null
+      ? null
+      : (store.games.find((game) => game.id === store.activeGameId) ?? null);
+
+  if (active && !isComplete(active)) {
+    return {
+      games: store.games,
+      game: active,
+      screen: "entry",
+    };
+  }
+
+  return {
+    games: store.games,
+    game: null,
+    screen: "overview",
+  };
 }
 
 export default function App() {
   const [state, setState] = useState<AppState>(initialState);
-  const { game, screen, resumeEntries } = state;
+  const { games, game, screen } = state;
 
   // Autosave on every change so a locked or crashed phone loses nothing.
   useEffect(() => {
-    if (game) saveGame(game);
+    if (game) upsertGame(game);
   }, [game]);
 
   function startGame(newGame: Game) {
-    setState({ game: newGame, screen: "entry", resumeEntries: null });
+    const store = upsertGame(newGame);
+    setState({
+      games: store.games,
+      game: newGame,
+      screen: "entry",
+    });
   }
 
-  function recordRound(round: Round) {
+  function openGame(selected: Game) {
+    const store = setActiveGameId(selected.id);
+    setState({
+      games: store.games,
+      game: selected,
+      screen: "gameOverview",
+    });
+  }
+
+  function saveRound(round: Round) {
     setState((previous) => {
       if (!previous.game) return previous;
-      const rounds = [...previous.game.rounds, round];
-      const complete = rounds.length >= previous.game.cardsSequence.length;
+      const existing = previous.game.rounds;
+      const index = existing.findIndex((item) => item.handNumber === round.handNumber);
+      let rounds: Round[];
+      if (index >= 0) {
+        rounds = existing.map((item, i) => (i === index ? round : item));
+      } else if (round.handNumber === existing.length + 1) {
+        rounds = [...existing, round];
+      } else {
+        return previous;
+      }
+
+      const wasComplete = isComplete(previous.game);
+      const nextGame = { ...previous.game, rounds };
+      const nowComplete = isComplete(nextGame);
       return {
-        game: { ...previous.game, rounds },
-        screen: complete ? "export" : "entry",
-        resumeEntries: null,
+        ...previous,
+        game: nextGame,
+        screen: !wasComplete && nowComplete ? "export" : "entry",
       };
     });
   }
 
-  /** Pull the last recorded round back into the form so it can be corrected. */
-  function reopenLastRound() {
+  function goNewGame() {
+    setState((previous) => ({
+      ...previous,
+      game: null,
+      screen: "setup",
+    }));
+  }
+
+  function goHome() {
+    const store = loadStore();
+    setState({
+      games: store.games,
+      game: null,
+      screen: "overview",
+    });
+  }
+
+  function goGameOverview() {
     setState((previous) => {
-      if (!previous.game || previous.game.rounds.length === 0) return previous;
-      const rounds = [...previous.game.rounds];
-      const reopened = rounds.pop();
-      return {
-        game: { ...previous.game, rounds },
-        screen: "entry",
-        resumeEntries: reopened ? reopened.entries : null,
-      };
+      if (!previous.game) return { ...previous, screen: "overview" };
+      return { ...previous, screen: "gameOverview" };
     });
   }
 
-  function newGame() {
-    clearGame();
-    setState({ game: null, screen: "setup", resumeEntries: null });
+  function removeGame() {
+    if (!game) return;
+    const store = deleteGame(game.id);
+    setState({
+      games: store.games,
+      game: null,
+      screen: "overview",
+    });
   }
 
-  if (!game || screen === "setup") {
+  if (screen === "overview") {
     return (
       <div className="app">
-        <GameSetup onStart={startGame} />
+        <GamesOverview games={games} onNewGame={goNewGame} onOpenGame={openGame} />
+      </div>
+    );
+  }
+
+  if (screen === "setup" || !game) {
+    return (
+      <div className="app">
+        <GameSetup onStart={startGame} onCancel={goHome} />
+      </div>
+    );
+  }
+
+  if (screen === "gameOverview") {
+    return (
+      <div className="app">
+        <GameOverview
+          game={game}
+          onContinue={() => setState((previous) => ({ ...previous, screen: "entry" }))}
+          onExport={() => setState((previous) => ({ ...previous, screen: "export" }))}
+          onAllGames={goHome}
+          onDelete={removeGame}
+        />
       </div>
     );
   }
@@ -83,7 +168,8 @@ export default function App() {
         <ExportScreen
           game={game}
           onBackToEntry={() => setState((previous) => ({ ...previous, screen: "entry" }))}
-          onNewGame={newGame}
+          onBackToOverview={goGameOverview}
+          onNewGame={goNewGame}
         />
       </div>
     );
@@ -91,14 +177,13 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Keyed by round so each round starts from a fresh form. */}
       <RoundEntry
-        key={game.rounds.length}
+        key={game.id}
         game={game}
-        initialEntries={resumeEntries}
-        onRecord={recordRound}
-        onReopenLastRound={reopenLastRound}
+        onSave={saveRound}
         onExport={() => setState((previous) => ({ ...previous, screen: "export" }))}
+        onOverview={goGameOverview}
+        onHome={goHome}
       />
     </div>
   );

@@ -6,6 +6,7 @@ import type { Game } from "../domain/types";
 interface ExportScreenProps {
   game: Game;
   onBackToEntry: () => void;
+  onBackToOverview: () => void;
   onNewGame: () => void;
 }
 
@@ -26,9 +27,13 @@ const shareApi = navigator as unknown as {
 
 const PREVIEW_LINES = 12;
 
-export function ExportScreen({ game, onBackToEntry, onNewGame }: ExportScreenProps) {
+export function ExportScreen({
+  game,
+  onBackToEntry,
+  onBackToOverview,
+  onNewGame,
+}: ExportScreenProps) {
   const [status, setStatus] = useState<Status | null>(null);
-  const [confirmingNew, setConfirmingNew] = useState(false);
 
   const csv = gameToCsv(game);
   const filename = csvFilename(game);
@@ -79,7 +84,7 @@ export function ExportScreen({ game, onBackToEntry, onNewGame }: ExportScreenPro
       <h1>{complete ? "Game complete" : "Export"}</h1>
       <p className="subtitle">
         {game.gameDate}
-        {game.gameNumber !== null && ` · game #${game.gameNumber}`}
+        {game.gameNumber !== null && ` · Game #${game.gameNumber}`}
         {` · ${game.rounds.length} of ${game.cardsSequence.length} rounds`}
       </p>
 
@@ -135,32 +140,19 @@ export function ExportScreen({ game, onBackToEntry, onNewGame }: ExportScreenPro
       </div>
 
       <div className="footer">
-        {!complete && (
-          <button
-            type="button"
-            className="ghost"
-            style={{ width: "100%", marginBottom: 10 }}
-            onClick={onBackToEntry}
-          >
-            Back to round {game.rounds.length + 1}
-          </button>
-        )}
-        <button
-          type="button"
-          className="danger"
-          style={{ width: "100%" }}
-          onClick={() => {
-            if (confirmingNew) onNewGame();
-            else setConfirmingNew(true);
-          }}
-        >
-          {confirmingNew ? "Tap again to discard this game" : "Start a new game"}
+        <button type="button" className="primary" onClick={onNewGame}>
+          Start a new game
         </button>
-        {confirmingNew && (
-          <p className="hint" style={{ marginTop: 8 }}>
-            Export first if you haven't. This device keeps only one game at a time.
-          </p>
-        )}
+        <div className="footer-nav">
+          {!complete && (
+            <button type="button" className="ghost" onClick={onBackToEntry}>
+              Round {game.rounds.length + 1}
+            </button>
+          )}
+          <button type="button" className="ghost" onClick={onBackToOverview}>
+            Overview
+          </button>
+        </div>
       </div>
     </>
   );

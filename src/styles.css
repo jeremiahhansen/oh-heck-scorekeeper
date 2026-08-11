@@ -1,17 +1,17 @@
 :root {
-  --bg: #0b1f19;
-  --surface: #123026;
-  --surface-raised: #17392d;
-  --border: #24513f;
-  --text: #f2f5f3;
-  --muted: #9db3a9;
-  --accent: #f0b429;
-  --accent-text: #2b1d00;
-  --danger: #e5484d;
-  --ok: #3dd68c;
+  --bg: #e8eaf0;
+  --surface: #f5f6fa;
+  --surface-raised: #ffffff;
+  --border: #c4c9d6;
+  --text: #1b2030;
+  --muted: #5c6578;
+  --accent: #2f3f8f;
+  --accent-text: #eef1ff;
+  --danger: #c0392b;
+  --ok: #1f7a55;
   --radius: 14px;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -207,13 +207,13 @@ button:focus-visible {
 
 button {
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--text);
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 10px;
-  min-height: 46px;
-  padding: 0 14px;
+  min-height: 40px;
+  padding: 0 12px;
   cursor: pointer;
   /* Suppress the iOS double-tap-to-zoom delay on taps. */
   touch-action: manipulation;
@@ -230,8 +230,8 @@ button.primary {
   color: var(--accent-text);
   font-weight: 650;
   width: 100%;
-  min-height: 54px;
-  font-size: 1.05rem;
+  min-height: 44px;
+  font-size: 0.98rem;
 }
 
 button.ghost {
@@ -256,7 +256,7 @@ button.link {
 
 .button-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .button-row > button {
@@ -312,6 +312,70 @@ button.link {
 
 /* ---------- Round entry ---------- */
 
+.round-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 3px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.round-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.round-nav-pill {
+  flex: 1 1 0;
+  min-height: 26px;
+  min-width: 22px;
+  max-width: 32px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  color: var(--muted);
+}
+
+/* Completed rounds: filled, readable */
+.round-nav-pill.is-recorded:not(.is-selected) {
+  background: var(--surface-raised);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* Next open round: accent ring */
+.round-nav-pill.is-current:not(.is-selected) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.round-nav-pill.is-selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.round-nav-pill:disabled {
+  opacity: 0.28;
+  border-style: dashed;
+}
+
+.score-summary {
+  margin-top: 14px;
+}
+
+.summary-table .num.negative {
+  color: var(--danger);
+}
+
 .round-header {
   display: flex;
   align-items: baseline;
@@ -354,7 +418,7 @@ button.link {
 
 .entry-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto 44px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 6px;
   align-items: center;
   padding: 7px 10px;
@@ -410,15 +474,23 @@ button.link {
 }
 
 .player-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-size: 0.98rem;
+}
+
+.player-name-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .dealer-tag {
   display: inline-block;
-  margin-left: 6px;
+  flex-shrink: 0;
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -426,7 +498,18 @@ button.link {
   border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
   border-radius: 4px;
   padding: 0 4px;
-  vertical-align: 1px;
+}
+
+.burn-toggle {
+  min-height: 28px;
+  min-width: 36px;
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* ---------- Stepper ---------- */
@@ -466,12 +549,13 @@ button.link {
 }
 
 .burn-toggle {
-  min-height: 42px;
-  padding: 0;
+  min-height: 36px;
+  padding: 0 12px;
   font-size: 0.78rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--muted);
+  flex-shrink: 0;
 }
 
 .burn-toggle[aria-pressed="true"] {
@@ -486,15 +570,32 @@ button.link {
   position: sticky;
   bottom: 0;
   background: linear-gradient(to bottom, transparent, var(--bg) 22%);
-  padding: 14px 0 max(12px, env(safe-area-inset-bottom));
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.footer-nav > button {
+  flex: 1 1 auto;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  border-radius: 8px;
 }
 
 .notice {
   border-radius: 10px;
   padding: 9px 11px;
   font-size: 0.88rem;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .notice.error {
@@ -590,3 +691,86 @@ button.link {
 .status-line.error {
   color: var(--danger);
 }
+
+/* ---------- Games list ---------- */
+
+.game-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.game-list-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-height: 0;
+}
+
+.game-list-title {
+  font-weight: 650;
+  font-size: 1rem;
+}
+
+.game-list-meta {
+  font-size: 0.88rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-list-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.status-progress {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.status-complete {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.round-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.round-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.round-list-item:last-child {
+  border-bottom: none;
+}
+
+.round-list-item.is-current {
+  font-weight: 650;
+}
+

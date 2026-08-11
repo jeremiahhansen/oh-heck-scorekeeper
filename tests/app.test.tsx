@@ -30,16 +30,21 @@ function bump(label: string, times = 1) {
 }
 
 function recordRound() {
-  fireEvent.click(screen.getByRole("button", { name: /^Record (round \d+|final round)$/ }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /^(Record round \d+|Record final round|Save round \d+)$/ }),
+  );
 }
 
 function recordButton() {
-  return screen.getByRole("button", { name: /^Record (round \d+|final round)$/ });
+  return screen.getByRole("button", {
+    name: /^(Record round \d+|Record final round|Save round \d+)$/,
+  });
 }
 
 /** Three players. The blank seats are trailing, so they're dropped on submit. */
 function setUpGame(names = ["Ada", "Bo", "Cy"]) {
   render(<App />);
+  fireEvent.click(screen.getByRole("button", { name: "New game" }));
   names.forEach((name, index) => setName(index + 1, name));
   fireEvent.click(screen.getByRole("button", { name: "Start game" }));
 }
@@ -53,6 +58,7 @@ function takeAllTricks(name: string, cards: number) {
 describe("setup screen", () => {
   it("starts with six seats and can add or remove them", () => {
     render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "New game" }));
     expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(6);
 
     fireEvent.click(screen.getByLabelText("Remove seat 6"));
@@ -64,6 +70,7 @@ describe("setup screen", () => {
 
   it("refuses to start with a duplicate player name", () => {
     render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "New game" }));
     setName(1, "Ada");
     setName(2, "Ada");
     fireEvent.click(screen.getByRole("button", { name: "Start game" }));
@@ -78,6 +85,7 @@ describe("setup screen", () => {
 
   it("deals fewer cards when the deck can't stretch to every player", () => {
     render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "New game" }));
     fireEvent.click(screen.getByRole("button", { name: "Add a player" }));
     fireEvent.click(screen.getByRole("button", { name: "Add a player" }));
     ["Ada", "Bo", "Cy", "Dee", "Eli", "Fay", "Gus", "Hal"].forEach((name, index) =>
@@ -104,8 +112,8 @@ describe("round entry", () => {
   it("puts the dealer in the bottom row, since they bid last", () => {
     setUpGame();
     const namesInOrder = () =>
-      [...document.querySelectorAll(".entry-table .player-name")].map((cell) =>
-        cell.textContent?.replace("deals", ""),
+      [...document.querySelectorAll(".entry-table .player-name-text")].map(
+        (cell) => cell.textContent,
       );
 
     // Cy deals round 1, so bidding runs Ada, Bo, Cy.
@@ -187,23 +195,25 @@ describe("round entry", () => {
     expect(screen.getByText(/^6 cards$/)).toBeTruthy();
     // Ada bid none and took all seven, so she burned by seven; the others made
     // their nothing bids.
-    const standings = screen.getByRole("list");
-    expect(standings.textContent).toContain("Ada-7");
-    expect(standings.textContent).toContain("Bo5");
+    expect(screen.getByRole("heading", { name: "Score summary" })).toBeTruthy();
+    const rows = screen.getAllByRole("row").map((row) => row.textContent);
+    expect(rows.some((row) => row?.includes("Ada") && row.includes("-7"))).toBe(true);
+    expect(rows.some((row) => row?.includes("Bo") && row.includes("5"))).toBe(true);
   });
 
-  it("reopens the previous round with its entries intact", () => {
+  it("reopens a previous round from the round navigator", () => {
     setUpGame();
     takeAllTricks("Ada", 7);
 
-    fireEvent.click(screen.getByRole("button", { name: "Fix round 1" }));
+    fireEvent.click(screen.getByRole("button", { name: /Round 1, recorded/ }));
     expect(screen.getByText("Round 1 of 13")).toBeTruthy();
     expect(screen.getByLabelText("tricks taken by Ada").textContent).toContain("7");
 
-    // Hand one of Ada's tricks to Bo and re-record.
+    // Hand one of Ada's tricks to Bo and save, then return to the frontier.
     fireEvent.click(screen.getByLabelText("Decrease tricks taken by Ada"));
     bump("Increase tricks taken by Bo");
     recordRound();
+    fireEvent.click(screen.getByRole("button", { name: /Round 2, current/ }));
     expect(screen.getByText("Round 2 of 13")).toBeTruthy();
   });
 });
@@ -245,5 +255,42 @@ describe("export screen", () => {
     render(<App />);
 
     expect(screen.getByText("Round 2 of 13")).toBeTruthy();
+  });
+});
+
+describe("multi-game overview", () => {
+  it("keeps a finished game when starting another", () => {
+    setUpGame(["Ada", "Bo", "Cy"]);
+    for (let round = 0; round < 13; round += 1) {
+      takeAllTricks("Ada", CARDS[round]!);
+    }
+    expect(screen.getByRole("heading", { name: "Game complete" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Start a new game" }));
+    setName(1, "Dee");
+    setName(2, "Eli");
+    setName(3, "Fay");
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "All games" }));
+
+    expect(screen.getByRole("heading", { name: "Games" })).toBeTruthy();
+    expect(screen.getByText(/Ada, Bo, Cy/)).toBeTruthy();
+    expect(screen.getByText(/Dee, Eli, Fay/)).toBeTruthy();
+  });
+
+  it("opens overview from round entry and can delete a game", () => {
+    setUpGame();
+    takeAllTricks("Ada", 7);
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+
+    expect(screen.getByRole("heading", { name: "Game overview" })).toBeTruthy();
+    expect(screen.getByText("Continue scoring")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tap again to delete" }));
+
+    expect(screen.getByRole("heading", { name: "Games" })).toBeTruthy();
+    expect(screen.getByText(/No games yet/)).toBeTruthy();
   });
 });
