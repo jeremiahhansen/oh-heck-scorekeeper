@@ -447,14 +447,16 @@ button.link {
   width: 44px;
 }
 
-.entry-row.is-dealer {
+.entry-row.is-lead {
   background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
 
 .entry-row.totals {
   background: var(--surface-raised);
-  border-top: 1px solid var(--border);
-  font-size: 0.9rem;
+  border-top: 2px solid var(--border);
+  font-size: 1.05rem;
+  padding: 12px 10px;
+  font-weight: 650;
 }
 
 /* Matches the stepper width so the totals sit under their own columns. */
@@ -462,7 +464,9 @@ button.link {
   width: 104px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  font-weight: 650;
+  font-weight: 750;
+  font-size: 1.2rem;
+  line-height: 1.1;
 }
 
 .total-cell.ok {
@@ -680,8 +684,6 @@ button.link {
   overflow: auto;
   max-height: min(60vh, 520px);
   -webkit-overflow-scrolling: touch;
-  margin: 0 -4px;
-  padding: 0 4px;
 }
 
 .scorecard {
@@ -697,6 +699,7 @@ button.link {
   border-right: 1px solid var(--border);
   padding: 6px 8px;
   vertical-align: middle;
+  background-clip: padding-box;
 }
 
 .scorecard thead th {
@@ -725,11 +728,18 @@ button.link {
   width: 1%;
   padding-left: 6px;
   padding-right: 6px;
+  /* Opaque wings cover 1px subpixel bleed on either side while scrolling. */
+  box-shadow:
+    -3px 0 0 0 var(--surface),
+    2px 0 0 0 var(--surface);
 }
 
 .scorecard thead .scorecard-corner {
   z-index: 3;
   background: var(--surface-raised);
+  box-shadow:
+    -3px 0 0 0 var(--surface-raised),
+    2px 0 0 0 var(--surface-raised);
 }
 
 .scorecard-round-num {
@@ -738,6 +748,22 @@ button.link {
 
 .scorecard-player {
   min-width: 56px;
+}
+
+.scorecard-place {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.scorecard-player-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scorecard-cell {

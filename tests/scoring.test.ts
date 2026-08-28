@@ -77,17 +77,64 @@ describe("runningTotals", () => {
 });
 
 describe("standings", () => {
-  it("ranks by total, highest first", () => {
-    expect(standings(game).map((row) => [row.rank, row.player.name, row.total])).toEqual([
-      [1, "Ada", 11],
-      [2, "Bo", 5],
-      [3, "Cy", 4],
+  it("ranks by total, highest first, and counts burns", () => {
+    expect(
+      standings(game).map((row) => [row.rank, row.player.name, row.burns, row.total]),
+    ).toEqual([
+      [1, "Ada", 0, 11],
+      [2, "Bo", 1, 5],
+      [3, "Cy", 1, 4],
     ]);
   });
 
   it("gives tied players the same rank", () => {
     const tied = standings({ ...game, rounds: [] });
     expect(tied.map((row) => row.rank)).toEqual([1, 1, 1]);
+    expect(tied.map((row) => row.burns)).toEqual([0, 0, 0]);
+  });
+
+  it("skips places after a tie (competition ranking)", () => {
+    // Scores 8, 5, 5, 5, -1, -1, -2 → ranks 1, 2, 2, 2, 5, 5, 7
+    const tiedGame: Game = {
+      ...game,
+      players: [
+        { id: "a", name: "Ada", position: 1 },
+        { id: "b", name: "Bo", position: 2 },
+        { id: "c", name: "Cy", position: 3 },
+        { id: "d", name: "Dee", position: 4 },
+        { id: "e", name: "Eli", position: 5 },
+        { id: "f", name: "Fay", position: 6 },
+        { id: "g", name: "Gus", position: 7 },
+      ],
+      cardsSequence: [3],
+      startingDealerId: "g",
+      rounds: [
+        {
+          handNumber: 1,
+          cardsDealt: 3,
+          dealerId: "g",
+          entries: {
+            a: { bid: 3, taken: 3, forcedBurn: false }, // 8
+            b: { bid: 0, taken: 0, forcedBurn: false }, // 5
+            c: { bid: 0, taken: 0, forcedBurn: false }, // 5
+            d: { bid: 0, taken: 0, forcedBurn: false }, // 5
+            e: { bid: 0, taken: 1, forcedBurn: false }, // -1
+            f: { bid: 1, taken: 0, forcedBurn: false }, // -1
+            g: { bid: 2, taken: 0, forcedBurn: false }, // -2
+          },
+        },
+      ],
+    };
+
+    expect(standings(tiedGame).map((row) => [row.player.name, row.rank, row.total])).toEqual([
+      ["Ada", 1, 8],
+      ["Bo", 2, 5],
+      ["Cy", 2, 5],
+      ["Dee", 2, 5],
+      ["Eli", 5, -1],
+      ["Fay", 5, -1],
+      ["Gus", 7, -2],
+    ]);
   });
 });
 

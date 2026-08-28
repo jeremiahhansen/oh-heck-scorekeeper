@@ -1,4 +1,4 @@
-import { scorecardMatrix } from "../domain/scoring";
+import { scorecardMatrix, standings } from "../domain/scoring";
 import type { Game } from "../domain/types";
 
 interface ScorecardProps {
@@ -7,6 +7,9 @@ interface ScorecardProps {
 
 export function Scorecard({ game }: ScorecardProps) {
   const { players, rounds } = scorecardMatrix(game);
+  const rankByPlayerId = new Map(
+    standings(game).map((row) => [row.player.id, row.rank]),
+  );
 
   return (
     <div className="scorecard-scroller">
@@ -16,7 +19,8 @@ export function Scorecard({ game }: ScorecardProps) {
             <th className="scorecard-corner" scope="col" />
             {players.map((player) => (
               <th key={player.id} scope="col" className="scorecard-player">
-                {player.name}
+                <span className="scorecard-place">{rankByPlayerId.get(player.id)}</span>
+                <span className="scorecard-player-name">{player.name}</span>
               </th>
             ))}
           </tr>

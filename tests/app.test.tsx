@@ -105,7 +105,7 @@ describe("round entry", () => {
     expect(screen.getByText("Round 1 of 13")).toBeTruthy();
     expect(screen.getByText(/^7 cards$/)).toBeTruthy();
     // The rightmost seat deals first by default.
-    const dealerRow = screen.getByText("deals").closest(".entry-row");
+    const dealerRow = screen.getByText("dealer").closest(".entry-row");
     expect(dealerRow?.textContent).toContain("Cy");
   });
 
@@ -118,12 +118,14 @@ describe("round entry", () => {
 
     // Cy deals round 1, so bidding runs Ada, Bo, Cy.
     expect(namesInOrder()).toEqual(["Ada", "Bo", "Cy"]);
+    expect(document.querySelector(".entry-row.is-lead")?.textContent).toContain("Ada");
 
     takeAllTricks("Ada", 7);
 
     // Ada deals round 2, so the table rotates to Bo, Cy, Ada.
     expect(namesInOrder()).toEqual(["Bo", "Cy", "Ada"]);
-    expect(screen.getByText("deals").closest(".entry-row")?.textContent).toContain("Ada");
+    expect(screen.getByText("dealer").closest(".entry-row")?.textContent).toContain("Ada");
+    expect(document.querySelector(".entry-row.is-lead")?.textContent).toContain("Bo");
   });
 
   it("keeps Record disabled until the tricks taken match the cards dealt", () => {

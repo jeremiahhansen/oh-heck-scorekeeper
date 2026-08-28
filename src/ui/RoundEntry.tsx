@@ -175,14 +175,15 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
           <span className="col-label">Bid</span>
           <span className="col-label">Took</span>
         </div>
-        {bidOrder.map((player) => {
+        {bidOrder.map((player, index) => {
           const entry = entryFor(player.id);
           const isDealer = player.id === dealer?.id;
+          const isLead = index === 0;
           return (
-            <div className={`entry-row${isDealer ? " is-dealer" : ""}`} key={player.id}>
+            <div className={`entry-row${isLead ? " is-lead" : ""}`} key={player.id}>
               <span className="player-name">
                 <span className="player-name-text">{player.name}</span>
-                {isDealer && <span className="dealer-tag">deals</span>}
+                {isDealer && <span className="dealer-tag">dealer</span>}
                 {isDealer && (
                   <button
                     type="button"
@@ -228,14 +229,16 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
               <tr>
                 <th className="num">#</th>
                 <th>Player</th>
+                <th className="num">Burns</th>
                 <th className="num">Total</th>
               </tr>
             </thead>
             <tbody>
-              {standings(game).map(({ player, total, rank }) => (
+              {standings(game).map(({ player, total, burns, rank }) => (
                 <tr key={player.id}>
                   <td className="num muted">{rank}</td>
                   <td>{player.name}</td>
+                  <td className="num muted">{burns}</td>
                   <td className={`num${total < 0 ? " negative" : ""}`}>{total}</td>
                 </tr>
               ))}

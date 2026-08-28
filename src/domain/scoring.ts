@@ -39,20 +39,39 @@ export function runningTotals(game: Game): Record<string, number> {
 export interface Standing {
   player: Player;
   total: number;
+  /** Hands where tricks taken did not match the bid. */
+  burns: number;
   /** 1-based placing. Ties share the lower number. */
   rank: number;
+}
+
+/** Burn count per player id across recorded rounds. */
+export function burnCounts(game: Game): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const player of game.players) counts[player.id] = 0;
+  for (const round of game.rounds) {
+    for (const [playerId, entry] of Object.entries(round.entries)) {
+      if (entry.bid !== entry.taken) counts[playerId] = (counts[playerId] ?? 0) + 1;
+    }
+  }
+  return counts;
 }
 
 /**
  * Players ranked by score, highest first.
  *
- * This matches how placings are marked at the top of the paper sheet, which
- * are purely a function of the final totals.
+ * Ties share a place and the next place skips ahead (1, 2, 2, 2, 5, …), matching
+ * how placings are marked at the top of the paper sheet.
  */
 export function standings(game: Game): Standing[] {
   const totals = runningTotals(game);
+  const burns = burnCounts(game);
   const sorted = playersInSeatOrder(game)
-    .map((player) => ({ player, total: totals[player.id] ?? 0 }))
+    .map((player) => ({
+      player,
+      total: totals[player.id] ?? 0,
+      burns: burns[player.id] ?? 0,
+    }))
     .sort((a, b) => b.total - a.total || a.player.position - b.player.position);
 
   let lastTotal: number | null = null;
