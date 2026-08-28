@@ -132,7 +132,7 @@ export function parseCsvLine(line: string): string[] {
 
 /**
  * Rebuild a Game from exported CSV text (with or without a Source File column).
- * Dealer isn't in the CSV, so round 1 uses the rightmost seat, then rotates.
+ * Dealer isn't in the CSV; defaults to the leftmost seat until ImportGame asks.
  */
 export function csvToGame(text: string): CsvImportResult {
   const lines = text
@@ -310,20 +310,21 @@ export function csvToGame(text: string): CsvImportResult {
     rounds.push({
       handNumber,
       cardsDealt,
-      dealerId: players[players.length - 1]!.id,
+      dealerId: players[0]!.id,
       entries,
     });
   }
 
   // CSV has no starting-dealer column; ImportGame asks who dealt first and
-  // applies it via withStartingDealer. Rightmost matches the New game default.
+  // applies it via withStartingDealer. Leftmost is the usual first dealer.
+  const leftmostId = players[0]!.id;
   const draft: Game = {
     id: createId(),
     gameNumber,
     gameDate,
     players,
     cardsSequence,
-    startingDealerId: players[players.length - 1]!.id,
+    startingDealerId: leftmostId,
     rounds,
   };
 

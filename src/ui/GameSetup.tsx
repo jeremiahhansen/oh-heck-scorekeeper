@@ -32,9 +32,9 @@ export function GameSetup({ onStart, onCancel }: GameSetupProps) {
   const seats = trimmed.slice(0, lastFilled);
   const playerCount = seats.filter((name) => name !== "").length;
 
-  // The rightmost seat deals first on the reference scoresheets.
+  // Leftmost seat deals first by default (same as import).
   const effectiveDealerSeat =
-    dealerSeat !== null && dealerSeat >= 1 && dealerSeat <= playerCount ? dealerSeat : playerCount;
+    dealerSeat !== null && dealerSeat >= 1 && dealerSeat <= playerCount ? dealerSeat : 1;
 
   function updateName(index: number, value: string) {
     setNames((previous) => previous.map((name, i) => (i === index ? value : name)));
@@ -83,7 +83,7 @@ export function GameSetup({ onStart, onCancel }: GameSetupProps) {
       position: index + 1,
     }));
 
-    const dealer = players[effectiveDealerSeat - 1] ?? players[players.length - 1];
+    const dealer = players[effectiveDealerSeat - 1] ?? players[0];
     if (!dealer) {
       setError("Pick who deals first.");
       return;

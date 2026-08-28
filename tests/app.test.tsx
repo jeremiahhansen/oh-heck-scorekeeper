@@ -104,9 +104,9 @@ describe("round entry", () => {
     setUpGame();
     expect(screen.getByText("Round 1 of 13")).toBeTruthy();
     expect(screen.getByText(/^7 cards$/)).toBeTruthy();
-    // The rightmost seat deals first by default.
+    // The leftmost seat deals first by default.
     const dealerRow = screen.getByText("dealer").closest(".entry-row");
-    expect(dealerRow?.textContent).toContain("Cy");
+    expect(dealerRow?.textContent).toContain("Ada");
   });
 
   it("puts the dealer in the bottom row, since they bid last", () => {
@@ -116,16 +116,16 @@ describe("round entry", () => {
         (cell) => cell.textContent,
       );
 
-    // Cy deals round 1, so bidding runs Ada, Bo, Cy.
-    expect(namesInOrder()).toEqual(["Ada", "Bo", "Cy"]);
-    expect(document.querySelector(".entry-row.is-lead")?.textContent).toContain("Ada");
+    // Ada deals round 1, so bidding runs Bo, Cy, Ada.
+    expect(namesInOrder()).toEqual(["Bo", "Cy", "Ada"]);
+    expect(document.querySelector(".entry-row.is-lead")?.textContent).toContain("Bo");
 
     takeAllTricks("Ada", 7);
 
-    // Ada deals round 2, so the table rotates to Bo, Cy, Ada.
-    expect(namesInOrder()).toEqual(["Bo", "Cy", "Ada"]);
-    expect(screen.getByText("dealer").closest(".entry-row")?.textContent).toContain("Ada");
-    expect(document.querySelector(".entry-row.is-lead")?.textContent).toContain("Bo");
+    // Bo deals round 2, so the table rotates to Cy, Ada, Bo.
+    expect(namesInOrder()).toEqual(["Cy", "Ada", "Bo"]);
+    expect(screen.getByText("dealer").closest(".entry-row")?.textContent).toContain("Bo");
+    expect(document.querySelector(".entry-row.is-lead")?.textContent).toContain("Cy");
   });
 
   it("keeps Record disabled until the tricks taken match the cards dealt", () => {
@@ -223,7 +223,7 @@ describe("round entry", () => {
     setUpGame();
     const fb = () => screen.getByRole("button", { name: /Forced burn for/ });
 
-    expect(fb().getAttribute("aria-label")).toContain("Cy");
+    expect(fb().getAttribute("aria-label")).toContain("Ada");
     fireEvent.click(fb());
     expect(fb().getAttribute("aria-pressed")).toBe("true");
     takeAllTricks("Ada", 7);
@@ -232,7 +232,7 @@ describe("round entry", () => {
     expect(fb().getAttribute("aria-pressed")).toBe("false");
 
     fireEvent.click(screen.getByRole("button", { name: /Round 1, recorded/ }));
-    expect(fb().getAttribute("aria-label")).toContain("Cy");
+    expect(fb().getAttribute("aria-label")).toContain("Ada");
     expect(fb().getAttribute("aria-pressed")).toBe("true");
   });
 });
@@ -325,8 +325,8 @@ describe("import game", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(screen.getByRole("heading", { name: "Who deals first?" })).toBeTruthy();
-    // Default is rightmost (Cy); pick Ada instead.
-    fireEvent.click(screen.getByRole("button", { name: "Ada" }));
+    // Default is leftmost (Ada).
+    expect(screen.getByRole("button", { name: "Ada" }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Import game" }));
 
     expect(screen.getByRole("heading", { name: "Game overview" })).toBeTruthy();
