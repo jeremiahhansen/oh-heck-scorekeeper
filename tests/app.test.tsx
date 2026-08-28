@@ -56,16 +56,16 @@ function takeAllTricks(name: string, cards: number) {
 }
 
 describe("setup screen", () => {
-  it("starts with six seats and can add or remove them", () => {
+  it("starts with seven seats and can add or remove them", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "New game" }));
-    expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(6);
+    expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(7);
 
-    fireEvent.click(screen.getByLabelText("Remove seat 6"));
-    expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(5);
+    fireEvent.click(screen.getByLabelText("Remove seat 7"));
+    expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(6);
 
     fireEvent.click(screen.getByRole("button", { name: "Add a player" }));
-    expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(6);
+    expect(screen.getAllByPlaceholderText(/^Seat \d$/)).toHaveLength(7);
   });
 
   it("refuses to start with a duplicate player name", () => {

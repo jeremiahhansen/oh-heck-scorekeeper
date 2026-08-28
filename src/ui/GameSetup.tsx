@@ -8,7 +8,7 @@ interface GameSetupProps {
   onCancel: () => void;
 }
 
-const INITIAL_SEATS = 6;
+const INITIAL_SEATS = 7;
 
 /** Local date, so a game played late in the evening doesn't roll to tomorrow. */
 function todayIso(): string {

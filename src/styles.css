@@ -114,6 +114,21 @@ h2 {
   margin-bottom: 6px;
 }
 
+.csv-import {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
 .row {
   display: flex;
   gap: 10px;
@@ -232,6 +247,13 @@ button.primary {
   width: 100%;
   min-height: 44px;
   font-size: 0.98rem;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+button.primary.is-saved {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
 }
 
 button.ghost {
@@ -716,34 +738,31 @@ button.link {
   text-overflow: ellipsis;
 }
 
-.scorecard-corner,
-.scorecard-round {
+.scorecard th.scorecard-corner,
+.scorecard th.scorecard-round {
   position: sticky;
   left: 0;
   z-index: 1;
   background: var(--surface);
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   font-weight: 600;
   width: 1%;
-  padding-left: 6px;
-  padding-right: 6px;
-  /* Opaque wings cover 1px subpixel bleed on either side while scrolling. */
-  box-shadow:
-    -3px 0 0 0 var(--surface),
-    2px 0 0 0 var(--surface);
+  padding: 6px 12px;
+  /* Cover subpixel bleed to the left of the sticky column while scrolling. */
+  box-shadow: -3px 0 0 0 var(--surface);
 }
 
-.scorecard thead .scorecard-corner {
+.scorecard thead th.scorecard-corner {
   z-index: 3;
   background: var(--surface-raised);
-  box-shadow:
-    -3px 0 0 0 var(--surface-raised),
-    2px 0 0 0 var(--surface-raised);
+  box-shadow: -3px 0 0 0 var(--surface-raised);
 }
 
 .scorecard-round-num {
   font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .scorecard-player {

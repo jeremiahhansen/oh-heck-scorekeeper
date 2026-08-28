@@ -4,6 +4,7 @@ import { playersInSeatOrder } from "../domain/rules";
 interface GamesOverviewProps {
   games: Game[];
   onNewGame: () => void;
+  onImportGame: () => void;
   onOpenGame: (game: Game) => void;
 }
 
@@ -17,7 +18,12 @@ function playerNames(game: Game): string {
     .join(", ");
 }
 
-export function GamesOverview({ games, onNewGame, onOpenGame }: GamesOverviewProps) {
+export function GamesOverview({
+  games,
+  onNewGame,
+  onImportGame,
+  onOpenGame,
+}: GamesOverviewProps) {
   return (
     <>
       <h1>Games</h1>
@@ -30,6 +36,14 @@ export function GamesOverview({ games, onNewGame, onOpenGame }: GamesOverviewPro
           </p>
           <button type="button" className="primary" onClick={onNewGame}>
             New game
+          </button>
+          <button
+            type="button"
+            className="ghost"
+            style={{ width: "100%", marginTop: 10 }}
+            onClick={onImportGame}
+          >
+            Import game
           </button>
         </div>
       ) : (
@@ -51,9 +65,7 @@ export function GamesOverview({ games, onNewGame, onOpenGame }: GamesOverviewPro
                         <span className="muted"> · #{game.gameNumber}</span>
                       )}
                     </span>
-                    <span className="game-list-meta">
-                      {playerNames(game)}
-                    </span>
+                    <span className="game-list-meta">{playerNames(game)}</span>
                     <span className="game-list-status">
                       <span>
                         {game.rounds.length} of {totalRounds} rounds
@@ -72,6 +84,11 @@ export function GamesOverview({ games, onNewGame, onOpenGame }: GamesOverviewPro
             <button type="button" className="primary" onClick={onNewGame}>
               New game
             </button>
+            <div className="footer-nav">
+              <button type="button" className="ghost" onClick={onImportGame}>
+                Import game
+              </button>
+            </div>
           </div>
         </>
       )}

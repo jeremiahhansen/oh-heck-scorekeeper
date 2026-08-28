@@ -1,6 +1,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CSV_COLUMNS, gameToCsv, gameToRows, csvFilename } from "../src/domain/csv";
+import {
+  CSV_COLUMNS,
+  csvFilename,
+  csvToGame,
+  gameToCsv,
+  gameToRows,
+  parseCsvLine,
+} from "../src/domain/csv";
 import { handScore, handStatus } from "../src/domain/scoring";
 import type { Entry, Game, Round } from "../src/domain/types";
 
@@ -171,5 +178,45 @@ describe("csvFilename", () => {
   it("includes the date, and the game number when there is one", () => {
     expect(csvFilename(fixtureGame)).toBe("oh-heck-2024-12-25.csv");
     expect(csvFilename({ ...fixtureGame, gameNumber: 50 })).toBe("oh-heck-2024-12-25-game-50.csv");
+  });
+});
+
+describe("csvToGame", () => {
+  it("parses quoted fields", () => {
+    expect(parseCsvLine('a,"b,c","d ""e"""')).toEqual(["a", "b,c", 'd "e"']);
+  });
+
+  it("round-trips an exported game", () => {
+    const exported = gameToCsv({ ...fixtureGame, gameNumber: 50 });
+    const result = csvToGame(exported);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.game.gameNumber).toBe(50);
+    expect(result.game.gameDate).toBe("2024-12-25");
+    expect(result.game.players.map((player) => player.name)).toEqual(
+      fixtureGame.players.map((player) => player.name),
+    );
+    expect(result.game.rounds).toHaveLength(13);
+    expect(result.game.cardsSequence).toEqual(fixtureGame.cardsSequence);
+    expect(result.game.rounds[0]?.cardsDealt).toBe(7);
+
+    const firstPlayer = result.game.players[0]!;
+    const firstEntry = result.game.rounds[0]!.entries[firstPlayer.id]!;
+    const fixtureFirst = fixtureGame.rounds[0]!.entries[fixtureGame.players[0]!.id]!;
+    expect(firstEntry).toEqual(fixtureFirst);
+  });
+
+  it("imports the reference fixture CSV", () => {
+    const result = csvToGame(FIXTURE);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.game.players).toHaveLength(7);
+    expect(result.game.rounds).toHaveLength(13);
+  });
+
+  it("rejects CSV missing a required column", () => {
+    const result = csvToGame("Game Date,Player Name\n2024-12-25,Ada\n");
+    expect(result).toEqual({ ok: false, error: 'Missing column "Game Number".' });
   });
 });

@@ -43,11 +43,13 @@ export function GameOverview({
       </div>
 
       <div className="footer">
-        {!complete && (
-          <button type="button" className="primary" onClick={onContinue}>
-            {game.rounds.length === 0 ? "Start scoring" : "Continue scoring"}
-          </button>
-        )}
+        <button type="button" className="primary" onClick={onContinue}>
+          {complete
+            ? "Change scoring"
+            : game.rounds.length === 0
+              ? "Start scoring"
+              : "Continue scoring"}
+        </button>
         <div className="footer-nav">
           <button type="button" className="ghost" onClick={onExport}>
             Export

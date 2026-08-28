@@ -9,10 +9,11 @@ import {
 import { GameSetup } from "./ui/GameSetup";
 import { GamesOverview } from "./ui/GamesOverview";
 import { GameOverview } from "./ui/GameOverview";
+import { ImportGame } from "./ui/ImportGame";
 import { RoundEntry } from "./ui/RoundEntry";
 import { ExportScreen } from "./ui/Export";
 
-type Screen = "overview" | "setup" | "entry" | "gameOverview" | "export";
+type Screen = "overview" | "setup" | "import" | "entry" | "gameOverview" | "export";
 
 interface AppState {
   games: Game[];
@@ -64,6 +65,15 @@ export default function App() {
     });
   }
 
+  function importGame(imported: Game) {
+    const store = upsertGame(imported);
+    setState({
+      games: store.games,
+      game: imported,
+      screen: "gameOverview",
+    });
+  }
+
   function openGame(selected: Game) {
     const store = setActiveGameId(selected.id);
     setState({
@@ -106,6 +116,14 @@ export default function App() {
     }));
   }
 
+  function goImportGame() {
+    setState((previous) => ({
+      ...previous,
+      game: null,
+      screen: "import",
+    }));
+  }
+
   function goHome() {
     const store = loadStore();
     setState({
@@ -135,15 +153,41 @@ export default function App() {
   if (screen === "overview") {
     return (
       <div className="app">
-        <GamesOverview games={games} onNewGame={goNewGame} onOpenGame={openGame} />
+        <GamesOverview
+          games={games}
+          onNewGame={goNewGame}
+          onImportGame={goImportGame}
+          onOpenGame={openGame}
+        />
       </div>
     );
   }
 
-  if (screen === "setup" || !game) {
+  if (screen === "import") {
+    return (
+      <div className="app">
+        <ImportGame onImport={importGame} onCancel={goHome} />
+      </div>
+    );
+  }
+
+  if (screen === "setup") {
     return (
       <div className="app">
         <GameSetup onStart={startGame} onCancel={goHome} />
+      </div>
+    );
+  }
+
+  if (!game) {
+    return (
+      <div className="app">
+        <GamesOverview
+          games={games}
+          onNewGame={goNewGame}
+          onImportGame={goImportGame}
+          onOpenGame={openGame}
+        />
       </div>
     );
   }

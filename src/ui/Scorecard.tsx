@@ -28,9 +28,12 @@ export function Scorecard({ game }: ScorecardProps) {
         <tbody>
           {rounds.map((round) => (
             <tr key={round.handNumber}>
-              <th scope="row" className="scorecard-round">
-                <span className="scorecard-round-num">R{round.handNumber}</span>
-                <span className="muted"> · {round.cardsDealt}</span>
+              <th
+                scope="row"
+                className="scorecard-round"
+                aria-label={`Round ${round.handNumber}, ${round.cardsDealt} cards`}
+              >
+                <span className="scorecard-round-num">{round.cardsDealt}</span>
               </th>
               {round.cells.map((cell, index) => {
                 const player = players[index];

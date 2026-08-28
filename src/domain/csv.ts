@@ -1,14 +1,21 @@
 /**
- * CSV export, byte-compatible with the oh-heck-scoresheets reference output
+ * CSV export/import, byte-compatible with the oh-heck-scoresheets reference output
  * (see samples/sample1_input.csv and samples/all.csv in that project).
  *
  * Rows are ordered by player position, then hand number, matching
  * scoresheet_to_rows() there.
  */
 
+import { createId } from "./id";
+import {
+  cardsSequenceFor,
+  dealerForRound,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  playersInSeatOrder,
+} from "./rules";
 import { handScore, handStatus } from "./scoring";
-import { playersInSeatOrder } from "./rules";
-import type { Game } from "./types";
+import type { Entry, Game, Player, Round } from "./types";
 
 /** Column order is part of the contract with the downstream analysis. */
 export const CSV_COLUMNS = [
@@ -88,4 +95,243 @@ export function csvFilename(game: Game): string {
   const parts = ["oh-heck", game.gameDate];
   if (game.gameNumber !== null) parts.push(`game-${game.gameNumber}`);
   return `${parts.join("-")}.csv`;
+}
+
+export type CsvImportResult = { ok: true; game: Game } | { ok: false; error: string };
+
+/** Split one CSV line into fields, honouring quotes. */
+export function parseCsvLine(line: string): string[] {
+  const fields: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index]!;
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[index + 1] === '"') {
+          current += '"';
+          index += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      fields.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
+/**
+ * Rebuild a Game from exported CSV text (with or without a Source File column).
+ * Dealer isn't in the CSV, so round 1 uses the rightmost seat, then rotates.
+ */
+export function csvToGame(text: string): CsvImportResult {
+  const lines = text
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.length > 0);
+
+  if (lines.length < 2) {
+    return { ok: false, error: "Paste a CSV with a header row and at least one data row." };
+  }
+
+  const header = parseCsvLine(lines[0]!);
+  const indexes: Partial<Record<(typeof CSV_COLUMNS)[number], number>> = {};
+  for (const column of CSV_COLUMNS) {
+    const index = header.indexOf(column);
+    if (index < 0) {
+      return { ok: false, error: `Missing column "${column}".` };
+    }
+    indexes[column] = index;
+  }
+
+  const cell = (fields: string[], column: (typeof CSV_COLUMNS)[number]): string =>
+    (fields[indexes[column]!] ?? "").trim();
+
+  type RawRow = {
+    gameNumber: string;
+    gameDate: string;
+    name: string;
+    position: number;
+    handNumber: number;
+    cardsDealt: number;
+    bid: number;
+    taken: number;
+    forcedBurn: boolean;
+  };
+
+  const rawRows: RawRow[] = [];
+  for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
+    const fields = parseCsvLine(lines[lineIndex]!);
+    const name = cell(fields, "Player Name");
+    const gameDate = cell(fields, "Game Date").slice(0, 10);
+    const position = Number(cell(fields, "Player Position"));
+    const handNumber = Number(cell(fields, "Hand Number"));
+    const cardsDealt = Number(cell(fields, "Cards Dealt"));
+    const bid = Number(cell(fields, "Tricks Bid"));
+    const taken = Number(cell(fields, "Tricks Taken"));
+    const forcedRaw = cell(fields, "Forced Burn Flag").toLowerCase();
+
+    if (!name) {
+      return { ok: false, error: `Row ${lineIndex + 1}: missing player name.` };
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(gameDate)) {
+      return { ok: false, error: `Row ${lineIndex + 1}: game date must be YYYY-MM-DD.` };
+    }
+    if (!Number.isFinite(position) || position < 1) {
+      return { ok: false, error: `Row ${lineIndex + 1}: invalid player position.` };
+    }
+    if (!Number.isFinite(handNumber) || handNumber < 1) {
+      return { ok: false, error: `Row ${lineIndex + 1}: invalid hand number.` };
+    }
+    if (!Number.isFinite(cardsDealt) || cardsDealt < 1) {
+      return { ok: false, error: `Row ${lineIndex + 1}: invalid cards dealt.` };
+    }
+    if (!Number.isFinite(bid) || !Number.isFinite(taken)) {
+      return { ok: false, error: `Row ${lineIndex + 1}: bid and taken must be numbers.` };
+    }
+
+    rawRows.push({
+      gameNumber: cell(fields, "Game Number"),
+      gameDate,
+      name,
+      position,
+      handNumber,
+      cardsDealt,
+      bid,
+      taken,
+      forcedBurn: forcedRaw === "yes" || forcedRaw === "true" || forcedRaw === "1",
+    });
+  }
+
+  const gameDate = rawRows[0]!.gameDate;
+  if (rawRows.some((row) => row.gameDate !== gameDate)) {
+    return { ok: false, error: "All rows must share the same game date." };
+  }
+
+  const gameNumberRaw = rawRows[0]!.gameNumber;
+  if (rawRows.some((row) => row.gameNumber !== gameNumberRaw)) {
+    return { ok: false, error: "All rows must share the same game number." };
+  }
+  const parsedGameNumber = Number.parseInt(gameNumberRaw, 10);
+  const gameNumber =
+    gameNumberRaw === "" || !Number.isFinite(parsedGameNumber) ? null : parsedGameNumber;
+
+  const playersByPosition = new Map<number, string>();
+  for (const row of rawRows) {
+    const existing = playersByPosition.get(row.position);
+    if (existing !== undefined && existing !== row.name) {
+      return {
+        ok: false,
+        error: `Position ${row.position} is used for both "${existing}" and "${row.name}".`,
+      };
+    }
+    playersByPosition.set(row.position, row.name);
+  }
+
+  const positions = [...playersByPosition.keys()].sort((a, b) => a - b);
+  if (positions.length < MIN_PLAYERS || positions.length > MAX_PLAYERS) {
+    return {
+      ok: false,
+      error: `Need between ${MIN_PLAYERS} and ${MAX_PLAYERS} players.`,
+    };
+  }
+  for (let index = 0; index < positions.length; index += 1) {
+    if (positions[index] !== index + 1) {
+      return { ok: false, error: "Player positions must be consecutive starting at 1." };
+    }
+  }
+
+  const players: Player[] = positions.map((position) => ({
+    id: createId(),
+    name: playersByPosition.get(position)!,
+    position,
+  }));
+  const playerIdByName = new Map(players.map((player) => [player.name, player.id]));
+
+  const handNumbers = [...new Set(rawRows.map((row) => row.handNumber))].sort((a, b) => a - b);
+  for (let index = 0; index < handNumbers.length; index += 1) {
+    if (handNumbers[index] !== index + 1) {
+      return { ok: false, error: "Hand numbers must be consecutive starting at 1." };
+    }
+  }
+
+  const cardsSequence = cardsSequenceFor(players.length);
+  if (handNumbers.length > cardsSequence.length) {
+    return {
+      ok: false,
+      error: `Too many rounds for ${players.length} players (max ${cardsSequence.length}).`,
+    };
+  }
+
+  const rounds: Round[] = [];
+  for (const handNumber of handNumbers) {
+    const handRows = rawRows.filter((row) => row.handNumber === handNumber);
+    const cardsDealt = handRows[0]!.cardsDealt;
+    if (handRows.some((row) => row.cardsDealt !== cardsDealt)) {
+      return { ok: false, error: `Round ${handNumber}: cards dealt must match on every row.` };
+    }
+    if (cardsDealt !== cardsSequence[handNumber - 1]) {
+      return {
+        ok: false,
+        error: `Round ${handNumber}: expected ${cardsSequence[handNumber - 1]} cards, got ${cardsDealt}.`,
+      };
+    }
+    if (handRows.length !== players.length) {
+      return {
+        ok: false,
+        error: `Round ${handNumber}: expected a row for every player.`,
+      };
+    }
+
+    const entries: Record<string, Entry> = {};
+    for (const row of handRows) {
+      const playerId = playerIdByName.get(row.name);
+      if (!playerId) {
+        return { ok: false, error: `Unknown player "${row.name}" in round ${handNumber}.` };
+      }
+      entries[playerId] = {
+        bid: row.bid,
+        taken: row.taken,
+        forcedBurn: row.forcedBurn,
+      };
+    }
+
+    rounds.push({
+      handNumber,
+      cardsDealt,
+      dealerId: players[players.length - 1]!.id,
+      entries,
+    });
+  }
+
+  const draft: Game = {
+    id: createId(),
+    gameNumber,
+    gameDate,
+    players,
+    cardsSequence,
+    startingDealerId: players[players.length - 1]!.id,
+    rounds,
+  };
+
+  const game: Game = {
+    ...draft,
+    rounds: draft.rounds.map((round) => {
+      const dealer = dealerForRound(draft, round.handNumber);
+      return { ...round, dealerId: dealer?.id ?? round.dealerId };
+    }),
+  };
+
+  return { ok: true, game };
 }

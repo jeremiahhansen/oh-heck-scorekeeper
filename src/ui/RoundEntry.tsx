@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Stepper } from "../components/Stepper";
 import {
   dealerForRound,
@@ -53,6 +53,20 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
   const [entries, setEntries] = useState<Record<string, Entry>>(() =>
     entriesForHand(game, nextHandNumber(game)),
   );
+  const [justSaved, setJustSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
+
+  function clearSavedFlash() {
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = null;
+    setJustSaved(false);
+  }
 
   const cardsDealt = game.cardsSequence[handNumber - 1] ?? 0;
   const dealer = dealerForRound(game, handNumber);
@@ -62,11 +76,13 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
 
   function selectHand(next: number) {
     if (next < 1 || next > frontier) return;
+    clearSavedFlash();
     setHandNumber(next);
     setEntries(entriesForHand(game, next));
   }
 
   function update(playerId: string, patch: Partial<Entry>) {
+    if (justSaved) clearSavedFlash();
     setEntries((previous) => ({
       ...previous,
       [playerId]: { ...(previous[playerId] ?? BLANK_ENTRY), ...patch },
@@ -107,9 +123,17 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
     const shouldAdvance = isFrontier && handNumber < totalRounds;
     onSave({ handNumber, cardsDealt, dealerId: dealer.id, entries: roundEntries });
     if (shouldAdvance) {
+      clearSavedFlash();
       const next = handNumber + 1;
       setHandNumber(next);
       setEntries(entriesForHand(game, next));
+    } else if (recorded) {
+      setJustSaved(true);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => {
+        setJustSaved(false);
+        savedTimer.current = null;
+      }, 1200);
     }
   }
 
@@ -256,15 +280,17 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
 
         <button
           type="button"
-          className="primary"
+          className={`primary${justSaved ? " is-saved" : ""}`}
           onClick={save}
           disabled={!validation.canRecord}
         >
-          {recorded
-            ? `Save round ${handNumber}`
-            : handNumber >= totalRounds
-              ? "Record final round"
-              : `Record round ${handNumber}`}
+          {justSaved
+            ? "Saved"
+            : recorded
+              ? `Save round ${handNumber}`
+              : handNumber >= totalRounds
+                ? "Record final round"
+                : `Record round ${handNumber}`}
         </button>
 
         <div className="footer-nav">
