@@ -7,6 +7,7 @@ import {
   gameToCsv,
   gameToRows,
   parseCsvLine,
+  withStartingDealer,
 } from "../src/domain/csv";
 import { handScore, handStatus } from "../src/domain/scoring";
 import type { Entry, Game, Round } from "../src/domain/types";
@@ -213,6 +214,18 @@ describe("csvToGame", () => {
     if (!result.ok) return;
     expect(result.game.players).toHaveLength(7);
     expect(result.game.rounds).toHaveLength(13);
+  });
+
+  it("applies a chosen starting dealer after import", () => {
+    const exported = gameToCsv(fixtureGame);
+    const result = csvToGame(exported);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const left = result.game.players.find((player) => player.position === 1)!;
+    const withLeft = withStartingDealer(result.game, left.id);
+    expect(withLeft.startingDealerId).toBe(left.id);
+    expect(withLeft.rounds[0]?.dealerId).toBe(left.id);
   });
 
   it("rejects CSV missing a required column", () => {

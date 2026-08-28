@@ -315,6 +315,8 @@ export function csvToGame(text: string): CsvImportResult {
     });
   }
 
+  // CSV has no starting-dealer column; ImportGame asks who dealt first and
+  // applies it via withStartingDealer. Rightmost matches the New game default.
   const draft: Game = {
     id: createId(),
     gameNumber,
@@ -325,13 +327,21 @@ export function csvToGame(text: string): CsvImportResult {
     rounds,
   };
 
-  const game: Game = {
-    ...draft,
-    rounds: draft.rounds.map((round) => {
-      const dealer = dealerForRound(draft, round.handNumber);
+  return {
+    ok: true,
+    game: withStartingDealer(draft, draft.startingDealerId),
+  };
+}
+
+/** Set who dealt round 1 and rebuild each round's dealerId from the rotation. */
+export function withStartingDealer(game: Game, startingDealerId: string): Game {
+  if (!game.players.some((player) => player.id === startingDealerId)) return game;
+  const next: Game = { ...game, startingDealerId };
+  return {
+    ...next,
+    rounds: next.rounds.map((round) => {
+      const dealer = dealerForRound(next, round.handNumber);
       return { ...round, dealerId: dealer?.id ?? round.dealerId };
     }),
   };
-
-  return { ok: true, game };
 }

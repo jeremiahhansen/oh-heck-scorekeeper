@@ -47,7 +47,14 @@ export function Scorecard({ game }: ScorecardProps) {
                 return (
                   <td
                     key={player?.id ?? index}
-                    className={`scorecard-cell${cell.burned ? " is-burn" : ""}`}
+                    className={[
+                      "scorecard-cell",
+                      cell.burned ? "is-burn" : "",
+                      cell.forcedBurn ? "is-forced-burn" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    title={cell.forcedBurn ? "Forced burn" : undefined}
                   >
                     <span
                       className={`scorecard-total${cell.runningTotal < 0 ? " negative" : ""}`}

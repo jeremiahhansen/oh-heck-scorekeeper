@@ -93,6 +93,8 @@ export interface ScorecardCell {
   /** Cumulative total through this round. */
   runningTotal: number;
   burned: boolean;
+  /** Manual forced-burn flag from the sheet / entry toggle. */
+  forcedBurn: boolean;
 }
 
 export interface ScorecardRound {
@@ -137,6 +139,7 @@ export function scorecardMatrix(game: Game): ScorecardMatrix {
         score,
         runningTotal: totals[player.id] ?? 0,
         burned: entry.bid !== entry.taken,
+        forcedBurn: entry.forcedBurn,
       };
     });
 

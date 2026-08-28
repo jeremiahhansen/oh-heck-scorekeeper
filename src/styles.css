@@ -795,6 +795,11 @@ button.link {
   background: color-mix(in srgb, var(--danger) 14%, var(--surface));
 }
 
+/* Inset ring so FB doesn't reflow the grid; readable on burn and clean cells. */
+.scorecard-cell.is-forced-burn {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
 .scorecard-cell.is-empty {
   color: var(--muted);
 }

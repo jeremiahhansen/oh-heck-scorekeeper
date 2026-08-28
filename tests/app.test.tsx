@@ -218,6 +218,23 @@ describe("round entry", () => {
     fireEvent.click(screen.getByRole("button", { name: /Round 2, current/ }));
     expect(screen.getByText("Round 2 of 13")).toBeTruthy();
   });
+
+  it("restores the forced-burn toggle when reopening a round", () => {
+    setUpGame();
+    const fb = () => screen.getByRole("button", { name: /Forced burn for/ });
+
+    expect(fb().getAttribute("aria-label")).toContain("Cy");
+    fireEvent.click(fb());
+    expect(fb().getAttribute("aria-pressed")).toBe("true");
+    takeAllTricks("Ada", 7);
+
+    expect(screen.getByText("Round 2 of 13")).toBeTruthy();
+    expect(fb().getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: /Round 1, recorded/ }));
+    expect(fb().getAttribute("aria-label")).toContain("Cy");
+    expect(fb().getAttribute("aria-pressed")).toBe("true");
+  });
 });
 
 describe("export screen", () => {
@@ -286,5 +303,70 @@ describe("multi-game overview", () => {
 
     expect(screen.getByRole("heading", { name: "Games" })).toBeTruthy();
     expect(screen.getByText(/No games yet/)).toBeTruthy();
+  });
+});
+
+describe("import game", () => {
+  it("asks who dealt first, then opens overview with that dealer on round 1", () => {
+    // Minimal valid 3-player, 1-round CSV (cards sequence still expects 13 rounds
+    // of data for a full game; use a short exported snippet from a real parse path).
+    const csv = [
+      "Game Number,Game Date,Player Name,Player Position,Hand Number,Cards Dealt,Tricks Bid,Tricks Taken,Forced Burn Flag,Hand Status,Hand Score",
+      ",2026-08-23,Ada,1,1,7,0,7,No,Burn,-7",
+      ",2026-08-23,Bo,2,1,7,0,0,No,Made Bid,5",
+      ",2026-08-23,Cy,3,1,7,0,0,Yes,Made Bid,5",
+    ].join("\r\n");
+
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Import game" }));
+    fireEvent.change(screen.getByPlaceholderText(/Game Number,Game Date/), {
+      target: { value: csv },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(screen.getByRole("heading", { name: "Who deals first?" })).toBeTruthy();
+    // Default is rightmost (Cy); pick Ada instead.
+    fireEvent.click(screen.getByRole("button", { name: "Ada" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import game" }));
+
+    expect(screen.getByRole("heading", { name: "Game overview" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Continue scoring" }));
+    expect(screen.getByText("Round 2 of 13")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Round 1, recorded/ }));
+    expect(screen.getByText("dealer").closest(".entry-row")?.textContent).toContain("Ada");
+    expect(
+      screen.getByRole("button", { name: /Forced burn for Ada/ }).getAttribute("aria-pressed"),
+    ).toBe("false");
+  });
+
+  it("rejects a second import with the same date and game number", () => {
+    const csv = [
+      "Game Number,Game Date,Player Name,Player Position,Hand Number,Cards Dealt,Tricks Bid,Tricks Taken,Forced Burn Flag,Hand Status,Hand Score",
+      "12,2026-08-23,Ada,1,1,7,0,7,No,Burn,-7",
+      "12,2026-08-23,Bo,2,1,7,0,0,No,Made Bid,5",
+      "12,2026-08-23,Cy,3,1,7,0,0,No,Made Bid,5",
+    ].join("\r\n");
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Import game" }));
+    fireEvent.change(screen.getByPlaceholderText(/Game Number,Game Date/), {
+      target: { value: csv },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import game" }));
+    expect(screen.getByRole("heading", { name: "Game overview" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "All games" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import game" }));
+    fireEvent.change(screen.getByPlaceholderText(/Game Number,Game Date/), {
+      target: { value: csv },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      screen.getByText("A game dated 2026-08-23 with number 12 is already saved."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Who deals first?" })).toBeNull();
   });
 });

@@ -29,11 +29,16 @@ function nextHandNumber(game: Game): number {
 function entriesForHand(game: Game, handNumber: number): Record<string, Entry> {
   const seated = playersInSeatOrder(game);
   const recorded = game.rounds.find((round) => round.handNumber === handNumber);
+  const dealer = dealerForRound(game, handNumber);
   const start: Record<string, Entry> = {};
   for (const player of seated) {
-    start[player.id] = recorded?.entries[player.id]
-      ? { ...recorded.entries[player.id]! }
-      : { ...BLANK_ENTRY };
+    const raw = recorded?.entries[player.id];
+    start[player.id] = {
+      bid: raw?.bid ?? BLANK_ENTRY.bid,
+      taken: raw?.taken ?? BLANK_ENTRY.taken,
+      // Dealer-only: normalize so a missing/undefined flag never sticks as pressed.
+      forcedBurn: player.id === dealer?.id ? Boolean(raw?.forcedBurn) : false,
+    };
   }
   return start;
 }

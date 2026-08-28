@@ -148,14 +148,15 @@ describe("scorecardMatrix", () => {
     expect(round1.handNumber).toBe(1);
     expect(round1.cardsDealt).toBe(2);
     expect(round1.cells).toEqual([
-      { bid: 1, taken: 1, score: 6, runningTotal: 6, burned: false },
-      { bid: 0, taken: 1, score: -1, runningTotal: -1, burned: true },
-      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false },
+      { bid: 1, taken: 1, score: 6, runningTotal: 6, burned: false, forcedBurn: false },
+      { bid: 0, taken: 1, score: -1, runningTotal: -1, burned: true, forcedBurn: false },
+      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false, forcedBurn: false },
     ]);
 
     const round2 = matrix.rounds[1]!;
     expect(round2.cells.map((cell) => cell?.runningTotal)).toEqual([11, 5, 4]);
     expect(round2.cells[2]?.burned).toBe(true);
+    expect(round2.cells[2]?.forcedBurn).toBe(true);
   });
 
   it("leaves unplayed rounds empty and marks a burn when Ada takes all", () => {
@@ -179,9 +180,9 @@ describe("scorecardMatrix", () => {
     const matrix = scorecardMatrix(inProgress);
     expect(matrix.rounds).toHaveLength(3);
     expect(matrix.rounds[0]?.cells).toEqual([
-      { bid: 0, taken: 7, score: -7, runningTotal: -7, burned: true },
-      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false },
-      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false },
+      { bid: 0, taken: 7, score: -7, runningTotal: -7, burned: true, forcedBurn: false },
+      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false, forcedBurn: false },
+      { bid: 0, taken: 0, score: 5, runningTotal: 5, burned: false, forcedBurn: false },
     ]);
     expect(matrix.rounds[1]?.cells).toEqual([null, null, null]);
     expect(matrix.rounds[2]?.cells).toEqual([null, null, null]);

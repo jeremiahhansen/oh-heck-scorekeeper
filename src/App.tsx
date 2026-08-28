@@ -166,7 +166,7 @@ export default function App() {
   if (screen === "import") {
     return (
       <div className="app">
-        <ImportGame onImport={importGame} onCancel={goHome} />
+        <ImportGame games={games} onImport={importGame} onCancel={goHome} />
       </div>
     );
   }
