@@ -1,10 +1,13 @@
 import { useState } from "react";
 import type { Game } from "../domain/types";
+import { GameNotes } from "./GameNotes";
 import { Scorecard } from "./Scorecard";
+import { ScoreSummary } from "./ScoreSummary";
 
 interface GameOverviewProps {
   game: Game;
   onContinue: () => void;
+  onNotesChange: (notes: string[]) => void;
   onExport: () => void;
   onAllGames: () => void;
   onDelete: () => void;
@@ -13,6 +16,7 @@ interface GameOverviewProps {
 export function GameOverview({
   game,
   onContinue,
+  onNotesChange,
   onExport,
   onAllGames,
   onDelete,
@@ -41,6 +45,10 @@ export function GameOverview({
           <Scorecard game={game} />
         )}
       </div>
+
+      <ScoreSummary game={game} />
+
+      <GameNotes notes={game.notes} onChange={onNotesChange} />
 
       <div className="footer">
         <button type="button" className="primary" onClick={onContinue}>

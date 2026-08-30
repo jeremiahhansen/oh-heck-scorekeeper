@@ -7,12 +7,14 @@ import {
   playersInSeatOrder,
   validateRound,
 } from "../domain/rules";
-import { standings } from "../domain/scoring";
 import type { Entry, Game, Round } from "../domain/types";
+import { GameNotes } from "./GameNotes";
+import { ScoreSummary } from "./ScoreSummary";
 
 interface RoundEntryProps {
   game: Game;
   onSave: (round: Round) => void;
+  onNotesChange: (notes: string[]) => void;
   onExport: () => void;
   onOverview: () => void;
   onHome: () => void;
@@ -49,7 +51,14 @@ function maxSelectableHand(game: Game): number {
   return game.rounds.length + 1;
 }
 
-export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: RoundEntryProps) {
+export function RoundEntry({
+  game,
+  onSave,
+  onNotesChange,
+  onExport,
+  onOverview,
+  onHome,
+}: RoundEntryProps) {
   const seated = playersInSeatOrder(game);
   const totalRounds = game.cardsSequence.length;
   const frontier = maxSelectableHand(game);
@@ -250,31 +259,9 @@ export function RoundEntry({ game, onSave, onExport, onOverview, onHome }: Round
         </div>
       </div>
 
-      {game.rounds.length > 0 && (
-        <div className="card score-summary">
-          <h2>Score summary</h2>
-          <table className="summary-table">
-            <thead>
-              <tr>
-                <th className="num">#</th>
-                <th>Player</th>
-                <th className="num">Burns</th>
-                <th className="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {standings(game).map(({ player, total, burns, rank }) => (
-                <tr key={player.id}>
-                  <td className="num muted">{rank}</td>
-                  <td>{player.name}</td>
-                  <td className="num muted">{burns}</td>
-                  <td className={`num${total < 0 ? " negative" : ""}`}>{total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ScoreSummary game={game} />
+
+      <GameNotes notes={game.notes} onChange={onNotesChange} />
 
       <div className="footer">
         {visibleProblems.map((problem) => (

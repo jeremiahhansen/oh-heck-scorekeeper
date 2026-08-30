@@ -52,4 +52,6 @@ export interface Game {
   startingDealerId: string;
   /** Completed rounds only, in order. */
   rounds: Round[];
+  /** Game-level notes, in the order they were added. */
+  notes: string[];
 }

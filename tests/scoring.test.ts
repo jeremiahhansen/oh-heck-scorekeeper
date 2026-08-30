@@ -42,6 +42,7 @@ const game: Game = {
   ],
   cardsSequence: [2, 1],
   startingDealerId: "c",
+  notes: [],
   rounds: [
     {
       handNumber: 1,

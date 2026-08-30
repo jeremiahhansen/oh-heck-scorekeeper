@@ -98,6 +98,7 @@ export function GameSetup({ onStart, onCancel }: GameSetupProps) {
       cardsSequence: cardsSequenceFor(playerCount),
       startingDealerId: dealer.id,
       rounds: [],
+      notes: [],
     });
   }
 

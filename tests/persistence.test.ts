@@ -22,6 +22,7 @@ function sampleGame(id: string, overrides: Partial<Game> = {}): Game {
     cardsSequence: [7, 6, 5],
     startingDealerId: "p3",
     rounds: [],
+    notes: [],
     ...overrides,
   };
 }
@@ -88,6 +89,40 @@ describe("persistence", () => {
     setActiveGameId("a");
 
     expect(loadStore().activeGameId).toBe("a");
+  });
+
+  it("loads a game saved before notes existed as an empty notes list", () => {
+    localStorage.setItem(
+      "oh-heck.games",
+      JSON.stringify({
+        version: 1,
+        games: [
+          {
+            id: "a",
+            gameNumber: null,
+            gameDate: "2026-08-10",
+            players: [
+              { id: "p1", name: "Ada", position: 1 },
+              { id: "p2", name: "Bo", position: 2 },
+              { id: "p3", name: "Cy", position: 3 },
+            ],
+            cardsSequence: [7, 6, 5],
+            startingDealerId: "p3",
+            rounds: [],
+          },
+        ],
+        activeGameId: "a",
+      }),
+    );
+
+    const store = loadStore();
+    expect(store.games).toHaveLength(1);
+    expect(store.games[0]?.notes).toEqual([]);
+  });
+
+  it("round-trips notes with the game", () => {
+    upsertGame(sampleGame("a", { notes: ["Hooked off a 0"] }));
+    expect(loadStore().games[0]?.notes).toEqual(["Hooked off a 0"]);
   });
 
   it("ignores a corrupt or wrong-version payload", () => {

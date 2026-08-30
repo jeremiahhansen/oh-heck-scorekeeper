@@ -2,10 +2,14 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   CSV_COLUMNS,
+  NOTES_CSV_COLUMNS,
   csvFilename,
   csvToGame,
+  gameNotesToCsv,
   gameToCsv,
   gameToRows,
+  notesCsvFilename,
+  notesToRows,
   parseCsvLine,
   withStartingDealer,
 } from "../src/domain/csv";
@@ -73,6 +77,7 @@ function gameFromFixture(rows: Record<string, string>[]): Game {
     cardsSequence: rounds.map((round) => round.cardsDealt),
     startingDealerId: players[players.length - 1]!.id,
     rounds,
+    notes: [],
   };
 }
 
@@ -182,6 +187,54 @@ describe("csvFilename", () => {
   });
 });
 
+describe("notes CSV", () => {
+  const withNotes: Game = {
+    ...fixtureGame,
+    gameNumber: 50,
+    notes: ["Jeremy bid 0 on the 1", 'Ada said "oh heck", then took 3'],
+  };
+
+  it("uses the notes column order", () => {
+    expect(NOTES_CSV_COLUMNS.join(",")).toBe("Game Number,Game Date,Note Number,Note Text");
+  });
+
+  it("writes one row per note in add order, numbered from 1", () => {
+    expect(notesToRows(withNotes)).toEqual([
+      ["50", "2024-12-25", "1", "Jeremy bid 0 on the 1"],
+      ["50", "2024-12-25", "2", 'Ada said "oh heck", then took 3'],
+    ]);
+  });
+
+  it("pairs the filename with the scores CSV", () => {
+    expect(notesCsvFilename(fixtureGame)).toBe("oh-heck-2024-12-25-notes.csv");
+    expect(notesCsvFilename(withNotes)).toBe("oh-heck-2024-12-25-game-50-notes.csv");
+  });
+
+  it("quotes note text that contains commas or quotes, and ends with CRLF", () => {
+    const csv = gameNotesToCsv(withNotes);
+    expect(csv.endsWith("\r\n")).toBe(true);
+    expect(csv.trimEnd().split("\r\n")).toEqual([
+      "Game Number,Game Date,Note Number,Note Text",
+      "50,2024-12-25,1,Jeremy bid 0 on the 1",
+      '50,2024-12-25,2,"Ada said ""oh heck"", then took 3"',
+    ]);
+  });
+
+  it("leaves game number empty when the game has none", () => {
+    const csv = gameNotesToCsv({ ...fixtureGame, notes: ["First deal was slow"] });
+    expect(csv.split("\r\n")[1]!.startsWith(",2024-12-25,1,")).toBe(true);
+  });
+
+  it("writes no file content when there are no notes", () => {
+    expect(gameNotesToCsv(fixtureGame)).toBe("");
+    expect(notesToRows(fixtureGame)).toEqual([]);
+  });
+
+  it("does not change the scores CSV when notes are present", () => {
+    expect(gameToCsv(withNotes)).toBe(gameToCsv({ ...fixtureGame, gameNumber: 50 }));
+  });
+});
+
 describe("csvToGame", () => {
   it("parses quoted fields", () => {
     expect(parseCsvLine('a,"b,c","d ""e"""')).toEqual(["a", "b,c", 'd "e"']);
@@ -201,6 +254,7 @@ describe("csvToGame", () => {
     expect(result.game.rounds).toHaveLength(13);
     expect(result.game.cardsSequence).toEqual(fixtureGame.cardsSequence);
     expect(result.game.rounds[0]?.cardsDealt).toBe(7);
+    expect(result.game.notes).toEqual([]);
 
     const firstPlayer = result.game.players[0]!;
     const firstEntry = result.game.rounds[0]!.entries[firstPlayer.id]!;

@@ -90,11 +90,44 @@ export function gameToCsv(game: Game, options: CsvOptions = {}): string {
   return `${lines.join("\r\n")}\r\n`;
 }
 
-/** e.g. "oh-heck-2024-12-25-game-50.csv" */
-export function csvFilename(game: Game): string {
+function csvFilenameStem(game: Game): string {
   const parts = ["oh-heck", game.gameDate];
   if (game.gameNumber !== null) parts.push(`game-${game.gameNumber}`);
-  return `${parts.join("-")}.csv`;
+  return parts.join("-");
+}
+
+/** e.g. "oh-heck-2024-12-25-game-50.csv" */
+export function csvFilename(game: Game): string {
+  return `${csvFilenameStem(game)}.csv`;
+}
+
+export const NOTES_CSV_COLUMNS = [
+  "Game Number",
+  "Game Date",
+  "Note Number",
+  "Note Text",
+] as const;
+
+export function notesToRows(game: Game): string[][] {
+  const gameNumber = game.gameNumber === null ? "" : String(game.gameNumber);
+  return game.notes.map((text, index) => [
+    gameNumber,
+    game.gameDate,
+    String(index + 1),
+    text,
+  ]);
+}
+
+/** Empty string when there are no notes — do not write a notes file in that case. */
+export function gameNotesToCsv(game: Game): string {
+  if (game.notes.length === 0) return "";
+  const lines = [toLine([...NOTES_CSV_COLUMNS]), ...notesToRows(game).map(toLine)];
+  return `${lines.join("\r\n")}\r\n`;
+}
+
+/** e.g. "oh-heck-2024-12-25-game-50-notes.csv" */
+export function notesCsvFilename(game: Game): string {
+  return `${csvFilenameStem(game)}-notes.csv`;
 }
 
 export type CsvImportResult = { ok: true; game: Game } | { ok: false; error: string };
@@ -326,6 +359,7 @@ export function csvToGame(text: string): CsvImportResult {
     cardsSequence,
     startingDealerId: leftmostId,
     rounds,
+    notes: [],
   };
 
   return {

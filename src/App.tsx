@@ -83,6 +83,13 @@ export default function App() {
     });
   }
 
+  function saveNotes(notes: string[]) {
+    setState((previous) => {
+      if (!previous.game) return previous;
+      return { ...previous, game: { ...previous.game, notes } };
+    });
+  }
+
   function saveRound(round: Round) {
     setState((previous) => {
       if (!previous.game) return previous;
@@ -198,6 +205,7 @@ export default function App() {
         <GameOverview
           game={game}
           onContinue={() => setState((previous) => ({ ...previous, screen: "entry" }))}
+          onNotesChange={saveNotes}
           onExport={() => setState((previous) => ({ ...previous, screen: "export" }))}
           onAllGames={goHome}
           onDelete={removeGame}
@@ -225,6 +233,7 @@ export default function App() {
         key={game.id}
         game={game}
         onSave={saveRound}
+        onNotesChange={saveNotes}
         onExport={() => setState((previous) => ({ ...previous, screen: "export" }))}
         onOverview={goGameOverview}
         onHome={goHome}

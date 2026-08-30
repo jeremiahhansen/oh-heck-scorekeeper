@@ -85,6 +85,7 @@ function gameWith(playerCount: number, startingSeat: number): Game {
     cardsSequence: cardsSequenceFor(playerCount),
     startingDealerId: `p${startingSeat}`,
     rounds: [],
+    notes: [],
   };
 }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { csvFilename, gameToCsv } from "../domain/csv";
+import { csvFilename, gameNotesToCsv, gameToCsv, notesCsvFilename } from "../domain/csv";
 import type { Game } from "../domain/types";
 
 interface ExportScreenProps {
@@ -26,19 +26,16 @@ const shareApi = navigator as unknown as {
 
 const PREVIEW_LINES = 12;
 
-export function ExportScreen({
-  game,
-  onBackToEntry,
-  onBackToOverview,
-  onNewGame,
-}: ExportScreenProps) {
+interface CsvCardProps {
+  heading: string;
+  hint: string;
+  csv: string;
+  filename: string;
+  shareLabel: string;
+}
+
+function CsvCard({ heading, hint, csv, filename, shareLabel }: CsvCardProps) {
   const [status, setStatus] = useState<Status | null>(null);
-
-  const csv = gameToCsv(game);
-  const filename = csvFilename(game);
-  const rowCount = csv.trimEnd().split("\r\n").length - 1;
-  const complete = game.rounds.length >= game.cardsSequence.length;
-
   const lines = csv.trimEnd().split("\r\n");
   const preview = lines.slice(0, PREVIEW_LINES).join("\n");
 
@@ -79,6 +76,46 @@ export function ExportScreen({
   }
 
   return (
+    <div className="card">
+      <h2>{heading}</h2>
+      <p className="hint">{hint}</p>
+      <button type="button" className="primary" onClick={share}>
+        {shareLabel}
+      </button>
+      <div className="button-row" style={{ marginTop: 10 }}>
+        <button type="button" className="ghost" onClick={download}>
+          Download
+        </button>
+        <button type="button" className="ghost" onClick={copy}>
+          Copy
+        </button>
+      </div>
+      {status && <p className={`status-line${status.isError ? " error" : ""}`}>{status.text}</p>}
+      <details style={{ marginTop: 12 }}>
+        <summary className="muted">Preview</summary>
+        <pre className="csv-preview" style={{ marginTop: 8 }}>
+          {preview}
+          {lines.length > PREVIEW_LINES && `\n… ${lines.length - PREVIEW_LINES} more rows`}
+        </pre>
+      </details>
+    </div>
+  );
+}
+
+export function ExportScreen({
+  game,
+  onBackToEntry,
+  onBackToOverview,
+  onNewGame,
+}: ExportScreenProps) {
+  const csv = gameToCsv(game);
+  const filename = csvFilename(game);
+  const rowCount = csv.trimEnd().split("\r\n").length - 1;
+  const complete = game.rounds.length >= game.cardsSequence.length;
+  const notesCsv = gameNotesToCsv(game);
+  const hasNotes = notesCsv.length > 0;
+
+  return (
     <>
       <h1>{complete ? "Game complete" : "Export"}</h1>
       <p className="subtitle">
@@ -87,34 +124,23 @@ export function ExportScreen({
         {` · ${game.rounds.length} of ${game.cardsSequence.length} rounds`}
       </p>
 
-      <div className="card">
-        <h2>CSV</h2>
-        <p className="hint">
-          {rowCount} rows, one per player per round. Same columns as the scoresheet reader, so this
-          drops straight into the same analysis.
-        </p>
-        <button type="button" className="primary" onClick={share}>
-          Share CSV
-        </button>
-        <div className="button-row" style={{ marginTop: 10 }}>
-          <button type="button" className="ghost" onClick={download}>
-            Download
-          </button>
-          <button type="button" className="ghost" onClick={copy}>
-            Copy
-          </button>
-        </div>
-        {status && (
-          <p className={`status-line${status.isError ? " error" : ""}`}>{status.text}</p>
-        )}
-        <details style={{ marginTop: 12 }}>
-          <summary className="muted">Preview</summary>
-          <pre className="csv-preview" style={{ marginTop: 8 }}>
-            {preview}
-            {lines.length > PREVIEW_LINES && `\n… ${lines.length - PREVIEW_LINES} more rows`}
-          </pre>
-        </details>
-      </div>
+      <CsvCard
+        heading="CSV"
+        hint={`${rowCount} rows, one per player per round. Same columns as the scoresheet reader, so this drops straight into the same analysis.`}
+        csv={csv}
+        filename={filename}
+        shareLabel="Share CSV"
+      />
+
+      {hasNotes && (
+        <CsvCard
+          heading="Notes CSV"
+          hint={`${game.notes.length} ${game.notes.length === 1 ? "note" : "notes"}, one row each. A sibling file next to the scores CSV.`}
+          csv={notesCsv}
+          filename={notesCsvFilename(game)}
+          shareLabel="Share notes CSV"
+        />
+      )}
 
       <div className="footer">
         <button type="button" className="primary" onClick={onNewGame}>

@@ -219,6 +219,23 @@ describe("round entry", () => {
     expect(screen.getByText("Round 2 of 13")).toBeTruthy();
   });
 
+  it("adds and deletes game notes without recording a round", () => {
+    setUpGame();
+    const noteField = screen.getByLabelText("New note");
+    fireEvent.change(noteField, { target: { value: "  Jeremy bid 0 on the 1  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+
+    expect(screen.getByText("Jeremy bid 0 on the 1")).toBeTruthy();
+    expect((screen.getByLabelText("New note") as HTMLInputElement).value).toBe("");
+
+    cleanup();
+    render(<App />);
+    expect(screen.getByText("Jeremy bid 0 on the 1")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete note 1" }));
+    expect(screen.queryByText("Jeremy bid 0 on the 1")).toBeNull();
+  });
+
   it("restores the forced-burn toggle when reopening a round", () => {
     setUpGame();
     const fb = () => screen.getByRole("button", { name: /Forced burn for/ });
@@ -256,6 +273,23 @@ describe("export screen", () => {
 
     // Three players over thirteen rounds.
     expect(screen.getByText(/39 rows, one per player per round/)).toBeTruthy();
+  });
+
+  it("offers a notes CSV only after a note has been added", () => {
+    setUpGame();
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    expect(screen.queryByRole("heading", { name: "Notes CSV" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Round 1" }));
+    fireEvent.change(screen.getByLabelText("New note"), {
+      target: { value: "Jeremy bid 0 on the 1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+
+    expect(screen.getByRole("heading", { name: "Notes CSV" })).toBeTruthy();
+    expect(screen.getByText(/1 note, one row each/)).toBeTruthy();
+    expect(screen.getByText(/Jeremy bid 0 on the 1/)).toBeTruthy();
   });
 
   it("restores an in-progress game after a reload", () => {
@@ -297,6 +331,14 @@ describe("multi-game overview", () => {
 
     expect(screen.getByRole("heading", { name: "Game overview" })).toBeTruthy();
     expect(screen.getByText("Continue scoring")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Score summary" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Notes" })).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("New note"), {
+      target: { value: "Bo always leads hearts" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    expect(screen.getByText("Bo always leads hearts")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(screen.getByRole("button", { name: "Tap again to delete" }));

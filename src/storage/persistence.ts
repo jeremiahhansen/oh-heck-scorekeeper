@@ -98,6 +98,12 @@ function asEntry(value: unknown): Entry | null {
   return { bid, taken, forcedBurn: forcedBurn === true };
 }
 
+function asNotes(value: unknown): string[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) return null;
+  return value;
+}
+
 function asRound(value: unknown): Round | null {
   if (!isRecord(value)) return null;
   const { handNumber, cardsDealt, dealerId, entries } = value;
@@ -116,7 +122,8 @@ function asRound(value: unknown): Round | null {
 /** Returns null on anything unexpected. */
 function asGame(value: unknown): Game | null {
   if (!isRecord(value)) return null;
-  const { id, gameNumber, gameDate, players, cardsSequence, startingDealerId, rounds } = value;
+  const { id, gameNumber, gameDate, players, cardsSequence, startingDealerId, rounds, notes } =
+    value;
 
   if (typeof id !== "string" || typeof gameDate !== "string") return null;
   if (typeof startingDealerId !== "string") return null;
@@ -141,6 +148,9 @@ function asGame(value: unknown): Game | null {
     parsedRounds.push(round);
   }
 
+  const parsedNotes = asNotes(notes);
+  if (!parsedNotes) return null;
+
   return {
     id,
     gameNumber: gameNumber as number | null,
@@ -149,6 +159,7 @@ function asGame(value: unknown): Game | null {
     cardsSequence: cardsSequence as number[],
     startingDealerId,
     rounds: parsedRounds,
+    notes: parsedNotes,
   };
 }
 
