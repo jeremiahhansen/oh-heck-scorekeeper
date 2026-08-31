@@ -41,8 +41,22 @@ export interface Standing {
   total: number;
   /** Hands where tricks taken did not match the bid. */
   burns: number;
+  /** Tricks taken across recorded rounds. */
+  tricks: number;
   /** 1-based placing. Ties share the lower number. */
   rank: number;
+}
+
+/** Tricks taken per player id across recorded rounds. */
+export function trickCounts(game: Game): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const player of game.players) counts[player.id] = 0;
+  for (const round of game.rounds) {
+    for (const [playerId, entry] of Object.entries(round.entries)) {
+      counts[playerId] = (counts[playerId] ?? 0) + entry.taken;
+    }
+  }
+  return counts;
 }
 
 /** Burn count per player id across recorded rounds. */
@@ -66,11 +80,13 @@ export function burnCounts(game: Game): Record<string, number> {
 export function standings(game: Game): Standing[] {
   const totals = runningTotals(game);
   const burns = burnCounts(game);
+  const tricks = trickCounts(game);
   const sorted = playersInSeatOrder(game)
     .map((player) => ({
       player,
       total: totals[player.id] ?? 0,
       burns: burns[player.id] ?? 0,
+      tricks: tricks[player.id] ?? 0,
     }))
     .sort((a, b) => b.total - a.total || a.player.position - b.player.position);
 

@@ -421,11 +421,22 @@ button.link {
   overflow-wrap: anywhere;
 }
 
-.notes-delete {
+.notes-action {
   flex-shrink: 0;
   min-height: 0;
   padding: 4px 10px;
   font-size: 0.82rem;
+}
+
+.notes-compose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-compose input {
+  flex: 1;
+  min-width: 0;
 }
 
 .summary-table .num.negative {

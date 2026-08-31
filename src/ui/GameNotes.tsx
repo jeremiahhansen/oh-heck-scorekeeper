@@ -35,7 +35,7 @@ export function GameNotes({ notes, onChange }: GameNotesProps) {
               <span className="notes-item-text">{note}</span>
               <button
                 type="button"
-                className="ghost notes-delete"
+                className="ghost notes-action"
                 aria-label={`Delete note ${index + 1}`}
                 onClick={() => remove(index)}
               >
@@ -45,18 +45,16 @@ export function GameNotes({ notes, onChange }: GameNotesProps) {
           ))}
         </ol>
       )}
-      <form onSubmit={handleSubmit}>
-        <label className="field">
-          <span className="label">New note</span>
-          <input
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Something to remember about this game"
-          />
-        </label>
-        <button type="submit" className="ghost" disabled={!trimmed}>
-          Add note
+      <form className="notes-compose" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="New note"
+          aria-label="New note"
+        />
+        <button type="submit" className="ghost notes-action" disabled={!trimmed}>
+          Add
         </button>
       </form>
     </div>

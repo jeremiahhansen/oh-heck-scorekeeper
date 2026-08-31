@@ -17,15 +17,17 @@ export function ScoreSummary({ game }: ScoreSummaryProps) {
           <tr>
             <th className="num">#</th>
             <th>Player</th>
+            <th className="num">Tricks</th>
             <th className="num">Burns</th>
             <th className="num">Total</th>
           </tr>
         </thead>
         <tbody>
-          {standings(game).map(({ player, total, burns, rank }) => (
+          {standings(game).map(({ player, total, tricks, burns, rank }) => (
             <tr key={player.id}>
               <td className="num muted">{rank}</td>
               <td>{player.name}</td>
+              <td className="num muted">{tricks}</td>
               <td className="num muted">{burns}</td>
               <td className={`num${total < 0 ? " negative" : ""}`}>{total}</td>
             </tr>

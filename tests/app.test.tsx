@@ -198,6 +198,7 @@ describe("round entry", () => {
     // Ada bid none and took all seven, so she burned by seven; the others made
     // their nothing bids.
     expect(screen.getByRole("heading", { name: "Score summary" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Tricks" })).toBeTruthy();
     const rows = screen.getAllByRole("row").map((row) => row.textContent);
     expect(rows.some((row) => row?.includes("Ada") && row.includes("-7"))).toBe(true);
     expect(rows.some((row) => row?.includes("Bo") && row.includes("5"))).toBe(true);
@@ -223,7 +224,7 @@ describe("round entry", () => {
     setUpGame();
     const noteField = screen.getByLabelText("New note");
     fireEvent.change(noteField, { target: { value: "  Jeremy bid 0 on the 1  " } });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
     expect(screen.getByText("Jeremy bid 0 on the 1")).toBeTruthy();
     expect((screen.getByLabelText("New note") as HTMLInputElement).value).toBe("");
@@ -284,7 +285,7 @@ describe("export screen", () => {
     fireEvent.change(screen.getByLabelText("New note"), {
       target: { value: "Jeremy bid 0 on the 1" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
 
     expect(screen.getByRole("heading", { name: "Notes CSV" })).toBeTruthy();
@@ -337,7 +338,7 @@ describe("multi-game overview", () => {
     fireEvent.change(screen.getByLabelText("New note"), {
       target: { value: "Bo always leads hearts" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByText("Bo always leads hearts")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));

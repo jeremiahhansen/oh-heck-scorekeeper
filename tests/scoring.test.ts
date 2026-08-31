@@ -80,11 +80,11 @@ describe("runningTotals", () => {
 describe("standings", () => {
   it("ranks by total, highest first, and counts burns", () => {
     expect(
-      standings(game).map((row) => [row.rank, row.player.name, row.burns, row.total]),
+      standings(game).map((row) => [row.rank, row.player.name, row.tricks, row.burns, row.total]),
     ).toEqual([
-      [1, "Ada", 0, 11],
-      [2, "Bo", 1, 5],
-      [3, "Cy", 1, 4],
+      [1, "Ada", 1, 0, 11],
+      [2, "Bo", 2, 1, 5],
+      [3, "Cy", 0, 1, 4],
     ]);
   });
 
