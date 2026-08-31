@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  compareGamesNewestFirst,
   duplicateGameMessage,
   findDuplicateGame,
   isSameGameIdentity,
@@ -51,5 +52,22 @@ describe("game identity", () => {
     expect(duplicateGameMessage({ gameDate: "2026-08-23", gameNumber: null })).toBe(
       "A game dated 2026-08-23 with no game number is already saved.",
     );
+  });
+});
+
+describe("compareGamesNewestFirst", () => {
+  it("sorts by date descending, then game number descending", () => {
+    const games = [
+      { id: "old", gameDate: "2026-08-10", gameNumber: 99 },
+      { id: "new-low", gameDate: "2026-08-23", gameNumber: 1 },
+      { id: "new-high", gameDate: "2026-08-23", gameNumber: 2 },
+      { id: "unnumbered", gameDate: "2026-08-23", gameNumber: null },
+    ];
+    expect([...games].sort(compareGamesNewestFirst).map((game) => game.id)).toEqual([
+      "new-high",
+      "new-low",
+      "unnumbered",
+      "old",
+    ]);
   });
 });

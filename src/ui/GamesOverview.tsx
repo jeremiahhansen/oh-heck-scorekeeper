@@ -1,4 +1,5 @@
 import type { Game } from "../domain/types";
+import { compareGamesNewestFirst } from "../domain/gameIdentity";
 import { playersInSeatOrder } from "../domain/rules";
 
 interface GamesOverviewProps {
@@ -49,7 +50,7 @@ export function GamesOverview({
       ) : (
         <>
           <ul className="game-list">
-            {games.map((game) => {
+            {[...games].sort(compareGamesNewestFirst).map((game) => {
               const complete = gameComplete(game);
               const totalRounds = game.cardsSequence.length;
               return (

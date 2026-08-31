@@ -9,6 +9,15 @@ export function isSameGameIdentity(
   return a.gameDate === b.gameDate && a.gameNumber === b.gameNumber;
 }
 
+/** Newest date first; on the same date, higher game number first. */
+export function compareGamesNewestFirst(
+  a: { gameDate: string; gameNumber: number | null },
+  b: { gameDate: string; gameNumber: number | null },
+): number {
+  if (a.gameDate !== b.gameDate) return a.gameDate < b.gameDate ? 1 : -1;
+  return (b.gameNumber ?? -1) - (a.gameNumber ?? -1);
+}
+
 export function findDuplicateGame<T extends { gameDate: string; gameNumber: number | null }>(
   candidate: T,
   existing: T[],

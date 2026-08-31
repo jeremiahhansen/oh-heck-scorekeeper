@@ -325,6 +325,29 @@ describe("multi-game overview", () => {
     expect(screen.getByText(/Dee, Eli, Fay/)).toBeTruthy();
   });
 
+  it("lists games with the newest date on top", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "New game" }));
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-08-10" } });
+    ["Ada", "Bo", "Cy"].forEach((name, index) => setName(index + 1, name));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "All games" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "New game" }));
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-08-23" } });
+    ["Dee", "Eli", "Fay"].forEach((name, index) => setName(index + 1, name));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "All games" }));
+
+    const titles = [...document.querySelectorAll(".game-list-title")].map(
+      (node) => node.textContent,
+    );
+    expect(titles[0]).toContain("2026-08-23");
+    expect(titles[1]).toContain("2026-08-10");
+  });
+
   it("opens overview from round entry and can delete a game", () => {
     setUpGame();
     takeAllTricks("Ada", 7);
